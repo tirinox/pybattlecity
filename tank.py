@@ -17,7 +17,8 @@ class Tank:
         ENEMY_SIMPLE = 8
         ENEMY_FAST = 10
         ENEMY_MIDDLE = 12
-        ENEMY_HEAVE = 14
+        ENEMY_HEAVY = 14
+        ALL = LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, ENEMY_SIMPLE, ENEMY_FAST, ENEMY_MIDDLE, ENEMY_HEAVY
 
     class Direction:
         UP = 0
@@ -37,7 +38,7 @@ class Tank:
         self.atlas = atlas
         self.direction = self.Direction.UP
         self.color = color
-        self.type = tank_type
+        self.tank_type = tank_type
         self.moving = True
         self.move_step = 0
         self.cnt = 0
@@ -48,12 +49,44 @@ class Tank:
                         for s in (0, 2)}
 
     def render(self, screen):
+
         sprite = self.sprites[(self.direction, self.move_step * 2)]
-        ey = 4 if self.type >= self.Type.ENEMY_SIMPLE and self.direction == self.Direction.RIGHT else 0
-        screen.blit(sprite, (self.x, self.y + ey))
+
+        if self.direction in (self.Direction.LEFT, self.Direction.RIGHT):
+            ex, ey = 0, 2
+        else:
+            ex, ey = 2, 0
+
+        if self.tank_type in (self.Type.ENEMY_MIDDLE, self.Type.ENEMY_FAST, self.Type.ENEMY_SIMPLE):
+            if self.direction == self.Direction.LEFT:
+                ey -= 4  #
+
+        if self.tank_type == self.Type.ENEMY_MIDDLE:
+            if self.direction == self.Direction.DOWN:
+                ex += 2
+
+        screen.blit(sprite, (self.x + ex,
+                             self.y + ey))
 
         if self.moving:
             self.cnt += 1
             if self.cnt >= self.MOVE_FRAMES:
                 self.cnt = 0
                 self.move_step = 1 - self.move_step
+
+    def gun_point(self):
+        x, y = self.x, self.y
+        w = h = 2 * self.atlas.upsample * self.atlas.sprite_size
+        xs = x + w // 2
+        ys = y + h // 2
+        shift = 2
+
+        d = self.direction
+        if d == self.Direction.UP:
+            return xs, y - shift
+        elif d == self.Direction.DOWN:
+            return xs, y + h + shift
+        elif d == self.Direction.LEFT:
+            return x - shift, ys
+        elif d == self.Direction.RIGHT:
+            return x + w + shift, ys

@@ -9,7 +9,9 @@ screen = pygame.display.set_mode((640, 480))
 
 atlas = spritesheet.SpriteSheet('atlas.png', upsample=4, sprite_size=8)
 field = field.Field(atlas)
-tank = Tank(atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
+
+tank_id = 5
+tank = Tank(atlas, Tank.Color.PURPLE, Tank.Type.ALL[tank_id])
 tank.x = 100
 tank.y = 100
 
@@ -21,6 +23,15 @@ while running:
     for event in pygame.event.get():
         if event.type == QUIT:
             running = 0
+        elif event.type == KEYDOWN and event.key == K_SPACE:
+            d, x, y = tank.direction, tank.x, tank.y
+            tank_id += 1
+            if tank_id >= len(Tank.Type.ALL):
+                tank_id = 0
+            tank = Tank(atlas, Tank.Color.PLAIN, Tank.Type.ALL[tank_id])
+            tank.x, tank.y = x, y
+            tank.direction = d
+
 
     keys = pygame.key.get_pressed()
 
@@ -46,6 +57,8 @@ while running:
 
     field.render(screen)
     tank.render(screen)
+
+    pygame.draw.circle(screen, (255, 255, 255), tank.gun_point(), 10)
 
     pygame.display.flip()
 
