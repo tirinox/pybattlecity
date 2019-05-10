@@ -7,7 +7,7 @@ from tank import Tank
 pygame.init()
 screen = pygame.display.set_mode((640, 480))
 
-atlas = spritesheet.SpriteSheet('atlas.png', upsample=4, sprite_size=8)
+atlas = spritesheet.SpriteSheet('atlas.png', upsample=2, sprite_size=8)
 field = field.Field(atlas)
 
 tank_id = 5
@@ -58,7 +58,7 @@ while running:
     field.render(screen)
     tank.render(screen)
 
-    pygame.draw.circle(screen, (255, 255, 255), tank.gun_point(), 10)
+    pygame.draw.circle(screen, (255, 0, 255), tank.gun_point(), 5)
 
     pygame.display.flip()
 
