@@ -94,3 +94,10 @@ class Tank:
             return x - shift, ys
         elif d == self.Direction.RIGHT:
             return x + w + shift, ys
+
+    def center_point(self):
+        x, y = self.x, self.y
+        w = h = 2 * self.atlas.upsample * self.atlas.sprite_size
+        xs = x + w // 2
+        ys = y + h // 2
+        return xs, ys

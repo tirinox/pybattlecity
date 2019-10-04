@@ -1,4 +1,5 @@
 import pygame
+from functools import lru_cache
 
 
 class SpriteSheet:
@@ -7,7 +8,9 @@ class SpriteSheet:
         self.upsample = upsample
         self.sheet = pygame.image.load(filename).convert()
 
+    @lru_cache(maxsize=None)
     def image_at(self, x, y, w=1, h=1, colorkey=None):
+        # print(f'get sprite {x}, {y}, {w}, {h}, {colorkey}')
         s = self.sprite_size
         rect = pygame.Rect(x * s, y * s, w * s, h * s)
         image = pygame.Surface(rect.size).convert()
@@ -20,6 +23,6 @@ class SpriteSheet:
 
         if colorkey is not None:
             if colorkey is -1:
-                colorkey = image.get_at((0,0))
+                colorkey = image.get_at((0, 0))
             image.set_colorkey(colorkey, pygame.RLEACCEL)
         return image
