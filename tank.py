@@ -1,15 +1,15 @@
-import pygame
 from spritesheet import SpriteSheet
+from enum import Enum
 
 
 class Tank:
-    class Color:
+    class Color(Enum):
         YELLOW = (0, 0)
         GREEN = (0, 16)
         PURPLE = (16, 16)
         PLAIN = (16, 0)
 
-    class Type:
+    class Type(Enum):
         LEVEL_1 = 0
         LEVEL_2 = 2
         LEVEL_3 = 4
@@ -18,20 +18,18 @@ class Tank:
         ENEMY_FAST = 10
         ENEMY_MIDDLE = 12
         ENEMY_HEAVY = 14
-        ALL = LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, ENEMY_SIMPLE, ENEMY_FAST, ENEMY_MIDDLE, ENEMY_HEAVY
 
-    class Direction:
+    class Direction(Enum):
         UP = 0
         LEFT = 4
         DOWN = 8
         RIGHT = 12
-        ALL = UP, LEFT, DOWN, RIGHT
 
     MOVE_FRAMES = 2
 
-    def get_sprite(self, color, type, direction, state):
-        x = color[0] + direction + state
-        y = color[1] + type
+    def get_sprite(self, color: Color, type: Type, direction: Direction, state):
+        x = color.value[0] + direction.value + state
+        y = color.value[1] + type.value
         return self.atlas.image_at(x, y, 2, 2)
 
     def __init__(self, atlas: SpriteSheet, color=Color.YELLOW, tank_type=Type.LEVEL_1):
@@ -45,13 +43,14 @@ class Tank:
         self.x = 0
         self.y = 0
         self.sprites = {(d, s): self.get_sprite(color, tank_type, d, s)
-                        for d in self.Direction.ALL
+                        for d in self.Direction
                         for s in (0, 2)}
 
     def render(self, screen):
-
         sprite = self.sprites[(self.direction, self.move_step * 2)]
 
+        # sprites for some tank types are not aligned wall, so we add ex and ey
+        # so movement is smooth without jumps when you change the direction to the opposite one
         if self.direction in (self.Direction.LEFT, self.Direction.RIGHT):
             ex, ey = 0, 2
         else:
@@ -59,7 +58,7 @@ class Tank:
 
         if self.tank_type in (self.Type.ENEMY_MIDDLE, self.Type.ENEMY_FAST, self.Type.ENEMY_SIMPLE):
             if self.direction == self.Direction.LEFT:
-                ey -= 4  #
+                ey -= 2
 
         if self.tank_type == self.Type.ENEMY_MIDDLE:
             if self.direction == self.Direction.DOWN:
@@ -68,6 +67,7 @@ class Tank:
         screen.blit(sprite, (self.x + ex,
                              self.y + ey))
 
+        # animate sprite when moving
         if self.moving:
             self.cnt += 1
             if self.cnt >= self.MOVE_FRAMES:
@@ -75,6 +75,10 @@ class Tank:
                 self.move_step = 1 - self.move_step
 
     def gun_point(self):
+        """
+        Calculate the coordinates of the gun of the tank
+        :return: (x, y) coordinates of gun tip point
+        """
         x, y = self.x, self.y
         w = h = 2 * self.atlas.upsample * self.atlas.sprite_size
         xs = x + w // 2

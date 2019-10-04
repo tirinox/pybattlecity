@@ -7,11 +7,11 @@ from tank import Tank
 pygame.init()
 screen = pygame.display.set_mode((640, 480))
 
-atlas = spritesheet.SpriteSheet('atlas.png', upsample=2, sprite_size=8)
+atlas = spritesheet.SpriteSheet('data/atlas.png', upsample=2, sprite_size=8)
 field = field.Field(atlas)
 
 tank_id = 5
-tank = Tank(atlas, Tank.Color.PURPLE, Tank.Type.ALL[tank_id])
+tank = Tank(atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
 tank.x = 100
 tank.y = 100
 
@@ -26,12 +26,11 @@ while running:
         elif event.type == KEYDOWN and event.key == K_SPACE:
             d, x, y = tank.direction, tank.x, tank.y
             tank_id += 1
-            if tank_id >= len(Tank.Type.ALL):
+            if tank_id >= len(Tank.Type):
                 tank_id = 0
-            tank = Tank(atlas, Tank.Color.PLAIN, Tank.Type.ALL[tank_id])
+            tank = Tank(atlas, Tank.Color.PLAIN, list(Tank.Type)[tank_id])
             tank.x, tank.y = x, y
             tank.direction = d
-
 
     keys = pygame.key.get_pressed()
 
