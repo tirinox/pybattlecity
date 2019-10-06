@@ -12,9 +12,13 @@ from random import randint
 class Game:
     def __init__(self):
         self.atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
-        self.field = field.Field(self.atlas)
 
         self.scene = GameObject()
+
+        self.field = field.Field(self.atlas)
+        self.field.load_from_file('data/level1.txt')
+
+        self.scene.add_child(self.field)
 
         tank = self.tank = Tank(self.atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
         tank.x = 100
@@ -62,7 +66,7 @@ if __name__ == '__main__':
 
     game = Game()
 
-    SHIFT = 5
+    SHIFT = 4
 
     running = True
     while running:
@@ -98,7 +102,7 @@ if __name__ == '__main__':
             tank.x += SHIFT
             tank.moving = True
 
-        screen.fill((0, 0, 0))
+        screen.fill((128, 128, 128))
 
         game.render(screen)
 

@@ -1,3 +1,3 @@
-GAME_WIDTH = 640
+GAME_WIDTH = 540
 GAME_HEIGHT = 480
 ATLAS = 'data/atlas.png'

@@ -1,4 +1,7 @@
 import time
+from collections import OrderedDict
+
+COLOR_BLACK_KEY = (0, 0, 1, 255)
 
 
 class Animator:
@@ -25,7 +28,7 @@ class Animator:
 class GameObject:
     def __init__(self):
         self._parent = None
-        self._children = set()
+        self._children = OrderedDict()
         self.position = (0, 0)
 
     def __hash__(self):
@@ -33,10 +36,10 @@ class GameObject:
 
     def add_child(self, child: 'GameObject'):
         child._parent = self
-        self._children.add(child)
+        self._children[child] = 1
 
     def remove_child(self, child):
-        self._children.remove(child)
+        del self._children[child]
 
     def remove_from_parent(self):
         if self._parent is not None:
@@ -45,7 +48,7 @@ class GameObject:
 
     def visit(self, screen):
         self.render(screen)
-        for child in set(self._children):
+        for child in self._children.keys():
             child.visit(screen)
 
     def render(self, screen):

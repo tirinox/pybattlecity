@@ -1,5 +1,5 @@
 from spritesheet import SpriteSheet
-from util import Animator, GameObject
+from util import *
 
 
 class Explosion(GameObject):
@@ -19,7 +19,7 @@ class Explosion(GameObject):
         self.x = x
         self.y = y
         self.animator = Animator(0.08, self.N_STATES, once=True)
-        self.sprites = [atlas.image_at(x, y, sx, sy, colorkey=-1) for
+        self.sprites = [atlas.image_at(x, y, sx, sy) for
                         x, y, sx, sy in self.SPRITE_DESCRIPTORS]
 
     def render(self, screen):
