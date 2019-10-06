@@ -9,8 +9,9 @@ from tank import Tank
 from util import GameObject
 
 
-
 class Game:
+    TANK_SPEED = 4
+
     def __init__(self):
         self.atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
 
@@ -45,8 +46,7 @@ class Game:
         self.tank = tank
 
     def make_explosion(self):
-        pt = self.tank.center_point()
-        expl = Explosion(self.atlas, *pt)
+        expl = Explosion(self.atlas, *self.tank.center_point)
         self.scene.add_child(expl)
 
     def render(self, screen):
@@ -58,11 +58,24 @@ class Game:
         screen.blit(dbg_label, (5, 5))
 
     def fire(self):
-        pt = self.tank.gun_point()
+        pt = self.tank.gun_point
         dir = self.tank.direction.vector
         projectile = Projectile(self.atlas, *pt, *dir)
         self.scene.add_child(projectile)
 
+    def move_tank(self, direction: Tank.Direction):
+        tank = self.tank
+        tank.moving = True
+        tank.direction = direction
+        vx, vy = direction.vector
+        vx *= self.TANK_SPEED
+        vy *= self.TANK_SPEED
+        tank.x += vx
+        tank.y += vy
+        if self.field.intersect_rect(tank.bounding_rect):
+            # undo movement
+            tank.x -= vx
+            tank.y -= vy
 
 
 if __name__ == '__main__':
@@ -72,7 +85,6 @@ if __name__ == '__main__':
 
     game = Game()
 
-    SHIFT = 4
 
     running = True
     while running:
@@ -94,26 +106,19 @@ if __name__ == '__main__':
         tank = game.tank
         tank.moving = False
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            tank.direction = tank.Direction.UP
-            tank.y -= SHIFT
-            tank.moving = True
+            game.move_tank(tank.Direction.UP)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            tank.direction = tank.Direction.DOWN
-            tank.y += SHIFT
-            tank.moving = True
+            game.move_tank(tank.Direction.DOWN)
         elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            tank.direction = tank.Direction.LEFT
-            tank.x -= SHIFT
-            tank.moving = True
+            game.move_tank(tank.Direction.LEFT)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            tank.direction = tank.Direction.RIGHT
-            tank.x += SHIFT
-            tank.moving = True
+            game.move_tank(tank.Direction.RIGHT)
 
         screen.fill((128, 128, 128))
 
         game.render(screen)
 
+        # pygame.draw.rect(screen, (255, 0, 0), game.tank.bounding_rect)
         # pygame.draw.circle(screen, (255, 0, 255), game.tank.gun_point(), 5)
 
         pygame.display.flip()

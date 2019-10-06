@@ -89,6 +89,7 @@ class Tank(GameObject):
                 self.cnt = 0
                 self.move_step = 1 - self.move_step
 
+    @property
     def gun_point(self):
         """
         Calculate the coordinates of the gun of the tank
@@ -110,9 +111,15 @@ class Tank(GameObject):
         elif d == self.Direction.RIGHT:
             return x + w + shift, ys
 
+    @property
     def center_point(self):
         x, y = self.x, self.y
         w = h = 2 * self.atlas.upsample * self.atlas.sprite_size
         xs = x + w // 2
         ys = y + h // 2
         return xs, ys
+
+    @property
+    def bounding_rect(self):
+        size = 2 * self.atlas.real_sprite_size
+        return self.x, self.y, size, size

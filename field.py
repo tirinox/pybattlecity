@@ -2,6 +2,7 @@ from util import GameObject
 from spritesheet import SpriteSheet
 from enum import Enum, auto
 import pygame
+from math import floor
 
 
 class Field(GameObject):
@@ -89,6 +90,15 @@ class Field(GameObject):
         y = ys + row * self.step
         return x, y
 
+    def cell_by_coords(self, x, y):
+        xs, ys = self.origin
+        col = floor((x - xs) / self.step)
+        row = floor((y - ys) / self.step)
+        if not (0 <= col < self.WIDTH and 0 <= row < self.HEIGHT):
+            return self.CellType.FREE
+        else:
+            return self.cells[col][row]
+
     @property
     def rect(self):
         return [*self.origin, self.step * self.WIDTH, self.step * self.HEIGHT]
@@ -106,3 +116,13 @@ class Field(GameObject):
                 if cell != cell.FREE:
                     coords = self.coord_by_col_and_row(col, row)
                     screen.blit(self.sprites[cell], coords)
+
+    def intersect_rect(self, rect):
+        x, y, w, h = rect
+        check_pts = (
+            (x, y),
+            (x + w, y),
+            (x, y + h),
+            (x + w, y + h)
+        )
+        return all(self.cell_by_coords(chpt_x, chpt_y).can_tank_run_here for chpt_x, chpt_y in check_pts)
