@@ -1,8 +1,8 @@
 from spritesheet import SpriteSheet
-from util import Animator
-import pygame
+from util import Animator, GameObject
 
-class Explosion:
+
+class Explosion(GameObject):
     SPRITE_DESCRIPTORS = (
         (32, 16, 2, 2),
         (34, 16, 2, 2),
@@ -10,9 +10,11 @@ class Explosion:
         (38, 16, 4, 4),
         (42, 16, 4, 4)
     )
+
     N_STATES = len(SPRITE_DESCRIPTORS)
 
     def __init__(self, atlas: SpriteSheet, x, y):
+        super().__init__()
         self.atlas = atlas
         self.x = x
         self.y = y
@@ -23,14 +25,12 @@ class Explosion:
     def render(self, screen):
         state = self.animator()
 
-        if not self.animator.done:
+        if self.animator.done:
+            self.remove_from_parent()
+        else:
             _, _, w, h = self.SPRITE_DESCRIPTORS[state]
             w_pix = w * self.atlas.sprite_size
             h_pix = h * self.atlas.sprite_size
             x, y = self.x - w_pix, self.y - h_pix
             sprite = self.sprites[state]
             screen.blit(sprite, (x, y))
-
-    @property
-    def done(self):
-        return self.animator.done

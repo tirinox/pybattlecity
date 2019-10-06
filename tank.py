@@ -1,8 +1,9 @@
 from spritesheet import SpriteSheet
 from enum import Enum
+from util import GameObject
 
 
-class Tank:
+class Tank(GameObject):
     class Color(Enum):
         YELLOW = (0, 0)
         GREEN = (0, 16)
@@ -33,11 +34,12 @@ class Tank:
         return self.atlas.image_at(x, y, 2, 2)
 
     def __init__(self, atlas: SpriteSheet, color=Color.YELLOW, tank_type=Type.LEVEL_1):
+        super().__init__()
         self.atlas = atlas
         self.direction = self.Direction.UP
         self.color = color
         self.tank_type = tank_type
-        self.moving = True
+        self.moving = False
         self.move_step = 0
         self.cnt = 0
         self.x = 0

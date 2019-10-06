@@ -5,77 +5,109 @@ import spritesheet
 import field
 from explosion import Explosion
 from tank import Tank
+from util import GameObject
 from random import randint
 
 
-pygame.init()
-screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
+class Game:
+    def __init__(self):
+        self.atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
+        self.field = field.Field(self.atlas)
 
-atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
-field = field.Field(atlas)
+        self.scene = GameObject()
 
-tank_id = 5
-tank = Tank(atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
-tank.x = 100
-tank.y = 100
+        tank = self.tank = Tank(self.atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
+        tank.x = 100
+        tank.y = 100
+        self.scene.add_child(tank)
 
-SHIFT = 5
+        tank2 = Tank(self.atlas, Tank.Color.GREEN, Tank.Type.LEVEL_4)
+        tank2.x = 200
+        tank2.y = 200
+        self.scene.add_child(tank2)
 
-objects = [tank, field]
+        self.font_debug = pygame.font.Font(None, 18)
 
-def make_explosion(x, y):
-    expl = Explosion(atlas, x, y)
-    objects.append(expl)
+    def switch_my_tank(self):
+        tank = self.tank
+        tank.remove_from_parent()
+        t, d, x, y = tank.tank_type, tank.direction, tank.x, tank.y
+        types = list(Tank.Type)
+        current_index = types.index(t)
+        next_type = types[(current_index + 1) % len(types)]
+        tank = Tank(self.atlas, Tank.Color.PLAIN, next_type)
+        tank.x, tank.y = x, y
+        tank.direction = d
+        self.scene.add_child(tank)
+        self.tank = tank
+
+    def make_explosion(self):
+        pt = self.tank.center_point()
+        expl = Explosion(self.atlas, *pt)
+        self.scene.add_child(expl)
+
+    def render(self, screen):
+        self.scene.visit(screen)
+
+        # - 1 because the scene is not literally an object
+        dbg_text = f'Objects: {self.scene.total_children - 1}'
+        dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
+        screen.blit(dbg_label, (5, 5))
 
 
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            running = False
-        elif event.type == KEYDOWN:
-            if event.key == K_SPACE:
-                d, x, y = tank.direction, tank.x, tank.y
-                tank_id += 1
-                if tank_id >= len(Tank.Type):
-                    tank_id = 0
-                tank = Tank(atlas, Tank.Color.PLAIN, list(Tank.Type)[tank_id])
-                tank.x, tank.y = x, y
-                tank.direction = d
-                objects[0] = tank
+if __name__ == '__main__':
+    pygame.init()
 
-            elif event.key == K_ESCAPE:
+    screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
+
+    game = Game()
+
+    SHIFT = 5
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == QUIT:
                 running = False
-            elif event.key == K_f:
-                make_explosion(*tank.center_point())
+            elif event.type == KEYDOWN:
+                if event.key == K_SPACE:
+                    game.switch_my_tank()
+                elif event.key == K_ESCAPE:
+                    running = False
+                elif event.key == K_f:
+                    game.make_explosion()
 
-    keys = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed()
 
-    tank.moving = False
-    if keys[pygame.K_UP] or keys[pygame.K_w]:
-        tank.direction = tank.Direction.UP
-        tank.y -= SHIFT
-        tank.moving = True
-    elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        tank.direction = tank.Direction.DOWN
-        tank.y += SHIFT
-        tank.moving = True
-    elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        tank.direction = tank.Direction.LEFT
-        tank.x -= SHIFT
-        tank.moving = True
-    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        tank.direction = tank.Direction.RIGHT
-        tank.x += SHIFT
-        tank.moving = True
+        tank = game.tank
+        tank.moving = False
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            tank.direction = tank.Direction.UP
+            tank.y -= SHIFT
+            tank.moving = True
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            tank.direction = tank.Direction.DOWN
+            tank.y += SHIFT
+            tank.moving = True
+        elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            tank.direction = tank.Direction.LEFT
+            tank.x -= SHIFT
+            tank.moving = True
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            tank.direction = tank.Direction.RIGHT
+            tank.x += SHIFT
+            tank.moving = True
 
-    screen.fill((0, 0, 0))
+        screen.fill((0, 0, 0))
 
-    for obj in objects:
-        obj.render(screen)
+        game.render(screen)
 
-    pygame.draw.circle(screen, (255, 0, 255), tank.gun_point(), 5)
+        # pygame.draw.circle(screen, (255, 0, 255), game.tank.gun_point(), 5)
 
-    pygame.display.flip()
+        pygame.display.flip()
 
-pygame.quit()
+    pygame.quit()
+
+
+
+
