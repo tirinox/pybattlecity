@@ -59,6 +59,9 @@ class Field(GameObject):
         super().__init__()
         self.atlas = atlas
 
+        self.origin = (40, 40)
+        self.step = self.atlas.sprite_size * 2
+
         # addressing: self.cells[x or column][y or row]
         self.cells = [
             [Field.CellType.FREE for _ in range(self.HEIGHT)]
@@ -80,18 +83,18 @@ class Field(GameObject):
                 print(symbol, end='')
             print()
 
-    def render(self, screen):
-        step = self.atlas.sprite_size * 2
-        xs, ys = 40, 40
+    def coord_by_col_and_row(self, col, row):
+        xs, ys = self.origin
+        x = xs + col * self.step
+        y = ys + row * self.step
+        return x, y
 
-        pygame.draw.rect(screen, self.BACKGROUND_COLOR, [xs, ys, step * self.WIDTH, step * self.HEIGHT])
+    def render(self, screen):
+        pygame.draw.rect(screen, self.BACKGROUND_COLOR, [*self.origin, self.step * self.WIDTH, self.step * self.HEIGHT])
 
         for col in range(self.WIDTH):
             for row in range(self.HEIGHT):
-                x = xs + col * step
-                y = ys + row * step
                 cell = self.cells[col][row]
                 if cell != cell.FREE:
-                    screen.blit(self.sprites[cell], (x, y))
-
-
+                    coords = self.coord_by_col_and_row(col, row)
+                    screen.blit(self.sprites[cell], coords)

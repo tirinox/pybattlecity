@@ -48,6 +48,10 @@ class Tank(GameObject):
                         for d in self.Direction
                         for s in (0, 2)}
 
+    def place(self, x, y):
+        self.x = x
+        self.y = y
+
     def render(self, screen):
         sprite = self.sprites[(self.direction, self.move_step * 2)]
 

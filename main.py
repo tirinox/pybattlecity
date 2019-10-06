@@ -21,13 +21,11 @@ class Game:
         self.scene.add_child(self.field)
 
         tank = self.tank = Tank(self.atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
-        tank.x = 100
-        tank.y = 100
+        tank.place(*self.field.coord_by_col_and_row(0, 0))
         self.scene.add_child(tank)
 
         tank2 = Tank(self.atlas, Tank.Color.GREEN, Tank.Type.LEVEL_4)
-        tank2.x = 200
-        tank2.y = 200
+        tank2.place(*self.field.coord_by_col_and_row(2, 0))
         self.scene.add_child(tank2)
 
         self.font_debug = pygame.font.Font(None, 18)
