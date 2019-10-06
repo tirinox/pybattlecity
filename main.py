@@ -2,11 +2,12 @@ import pygame
 from pygame.locals import *
 from config import *
 import spritesheet
-import field
+from field import Field
+from projectile import Projectile
 from explosion import Explosion
 from tank import Tank
 from util import GameObject
-from random import randint
+
 
 
 class Game:
@@ -15,7 +16,7 @@ class Game:
 
         self.scene = GameObject()
 
-        self.field = field.Field(self.atlas)
+        self.field = Field(self.atlas)
         self.field.load_from_file('data/level1.txt')
 
         self.scene.add_child(self.field)
@@ -56,6 +57,13 @@ class Game:
         dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
         screen.blit(dbg_label, (5, 5))
 
+    def fire(self):
+        pt = self.tank.gun_point()
+        dir = self.tank.direction.vector
+        projectile = Projectile(self.atlas, *pt, *dir)
+        self.scene.add_child(projectile)
+
+
 
 if __name__ == '__main__':
     pygame.init()
@@ -72,12 +80,14 @@ if __name__ == '__main__':
             if event.type == QUIT:
                 running = False
             elif event.type == KEYDOWN:
-                if event.key == K_SPACE:
+                if event.key == K_t:
                     game.switch_my_tank()
                 elif event.key == K_ESCAPE:
                     running = False
                 elif event.key == K_f:
                     game.make_explosion()
+                elif event.key == K_SPACE:
+                    game.fire()
 
         keys = pygame.key.get_pressed()
 

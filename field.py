@@ -77,7 +77,7 @@ class Field(GameObject):
             lines = f.readlines()
         assert len(lines) >= self.HEIGHT, "incomplete level"
         for _, (y, line) in zip(range(self.HEIGHT), enumerate(lines)):
-            assert len(line) >= self.WIDTH
+            assert len(line) >= self.WIDTH, "incomplete line"
             for _, (x, symbol) in zip(range(self.WIDTH), enumerate(line)):
                 self.cells[x][y] = self.CellType.from_symbol(symbol)
                 print(symbol, end='')
@@ -89,8 +89,16 @@ class Field(GameObject):
         y = ys + row * self.step
         return x, y
 
+    @property
+    def rect(self):
+        return [*self.origin, self.step * self.WIDTH, self.step * self.HEIGHT]
+
+    def point_in_field(self, x, y):
+        fx, fy, fw, fh = self.rect
+        return fx <= x <= fx + fw and fy <= y <= fy + fh
+
     def render(self, screen):
-        pygame.draw.rect(screen, self.BACKGROUND_COLOR, [*self.origin, self.step * self.WIDTH, self.step * self.HEIGHT])
+        pygame.draw.rect(screen, self.BACKGROUND_COLOR, self.rect)
 
         for col in range(self.WIDTH):
             for row in range(self.HEIGHT):

@@ -26,6 +26,15 @@ class Tank(GameObject):
         DOWN = 8
         RIGHT = 12
 
+        @property
+        def vector(self):
+            return {
+                self.UP: (0, -1),
+                self.DOWN: (0, 1),
+                self.LEFT: (-1, 0),
+                self.RIGHT: (1, 0)
+            }[self]
+
     MOVE_FRAMES = 2
 
     def get_sprite(self, color: Color, type: Type, direction: Direction, state):

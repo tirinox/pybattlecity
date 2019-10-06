@@ -27,3 +27,7 @@ class SpriteSheet:
                 colorkey = image.get_at((0, 0))
             image.set_colorkey(colorkey, pygame.RLEACCEL)
         return image
+
+    @property
+    def real_sprite_size(self):
+        return self.sprite_size * self.upsample

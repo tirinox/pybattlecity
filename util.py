@@ -48,7 +48,7 @@ class GameObject:
 
     def visit(self, screen):
         self.render(screen)
-        for child in self._children.keys():
+        for child in list(self._children.keys()):
             child.visit(screen)
 
     def render(self, screen):
