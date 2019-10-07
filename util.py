@@ -36,6 +36,9 @@ class GameObject:
     def __hash__(self):
         return id(self)
 
+    def __iter__(self):
+        return iter(OrderedDict(self._children))
+
     def add_child(self, child: 'GameObject'):
         child._parent = self
         self._children[child] = 1

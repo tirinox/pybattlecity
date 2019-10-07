@@ -3,6 +3,7 @@ from spritesheet import SpriteSheet
 from enum import Enum, auto
 import pygame
 from math import floor
+from projectile import Projectile
 
 
 class Field(GameObject):
@@ -41,6 +42,17 @@ class Field(GameObject):
                 self.FREE,
                 self.SKATE,
                 self.GREEN
+            )
+
+        @property
+        def solid(self):
+            return self in (
+                self.BRICK,
+                self.BRICK_TOP,
+                self.BRICK_LEFT,
+                self.BRICK_BOTTOM,
+                self.BRICK_RIGHT,
+                self.CONCRETE
             )
 
         @classmethod
@@ -90,15 +102,23 @@ class Field(GameObject):
         y = ys + row * self.step
         return x, y
 
-    def cell_by_coords(self, x, y):
+    def col_row_from_coords(self, x, y):
         xs, ys = self.origin
         col = floor((x - xs) / self.step)
         row = floor((y - ys) / self.step)
+        return col, row
 
+    def cell_by_coords(self, x, y):
+        col, row = self.col_row_from_coords(x, y)
         if 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT:
             return self.cells[col][row]
         else:
             return self.CellType.CONCRETE
+
+    def set_cell_by_coord(self, x, y, cell: CellType):
+        col, row = self.col_row_from_coords(x, y)
+        if 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT:
+            self.cells[col][row] = cell
 
     @property
     def rect(self):
@@ -131,3 +151,12 @@ class Field(GameObject):
     def get_center_of_cell(self, col, row):
         xs, ys = self.origin
         return xs + col * self.step, ys + row * self.step
+
+    def check_hit(self, p: Projectile):
+        cell = self.cell_by_coords(p.x, p.y)
+        if cell.solid:
+            p.remove_from_parent()
+            if cell == cell.BRICK:
+                self.set_cell_by_coord(p.x, p.y, cell.FREE)
+
+

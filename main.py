@@ -10,7 +10,7 @@ from util import *
 
 
 class Game:
-    TANK_SPEED = 8
+    TANK_SPEED = 4
 
     def __init__(self):
         self.atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
@@ -25,6 +25,9 @@ class Game:
         tank = self.tank = Tank(self.atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
         tank.place(*self.field.get_center_of_cell(1, 1))
         self.scene.add_child(tank)
+
+        self.projectiles = GameObject()
+        self.scene.add_child(self.projectiles)
 
         # tank2 = Tank(self.atlas, Tank.Color.GREEN, Tank.Type.LEVEL_4)
         # tank2.place(*self.field.coord_by_col_and_row(2, 0))
@@ -57,11 +60,14 @@ class Game:
         dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
         screen.blit(dbg_label, (5, 5))
 
+        for p in self.projectiles:
+            self.field.check_hit(p)
+
     def fire(self):
         pt = self.tank.gun_point
         dir = self.tank.direction.vector
-        projectile = Projectile(self.atlas, *pt, *dir)
-        self.scene.add_child(projectile)
+        projectile = Projectile(self.atlas, *pt, *dir, 1)
+        self.projectiles.add_child(projectile)
 
     def move_tank(self, direction: Tank.Direction):
         tank = self.tank
@@ -76,6 +82,7 @@ class Game:
             # undo movement
             tank.x -= vx
             tank.y -= vy
+
 
 
 if __name__ == '__main__':
