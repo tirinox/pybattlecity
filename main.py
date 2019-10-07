@@ -6,7 +6,7 @@ from field import Field
 from projectile import Projectile
 from explosion import Explosion
 from tank import Tank
-from util import GameObject
+from util import *
 
 
 class Game:
@@ -72,10 +72,10 @@ class Game:
         vy *= self.TANK_SPEED
         tank.x += vx
         tank.y += vy
-        if self.field.intersect_rect(tank.bounding_rect):
-            # undo movement
-            tank.x -= vx
-            tank.y -= vy
+        # if self.field.intersect_rect(tank.bounding_rect):
+        #     # undo movement
+        #     tank.x -= vx
+        #     tank.y -= vy
 
 
 if __name__ == '__main__':
@@ -84,7 +84,6 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
 
     game = Game()
-
 
     running = True
     while running:
@@ -118,8 +117,9 @@ if __name__ == '__main__':
 
         game.render(screen)
 
-        # pygame.draw.rect(screen, (255, 0, 0), game.tank.bounding_rect)
-        # pygame.draw.circle(screen, (255, 0, 255), game.tank.gun_point(), 5)
+        # pygame.draw.rect(screen, (255, 255, 0), game.tank.bounding_rect, 1)
+        # pygame.draw.circle(screen, (0, 0, 255), game.tank.center_point, 4, 1)
+        # pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
 
         pygame.display.flip()
 

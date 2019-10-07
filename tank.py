@@ -1,10 +1,11 @@
 from spritesheet import SpriteSheet
 from enum import Enum
-from util import GameObject
+from util import *
 
 
 class Tank(GameObject):
     class Color(Enum):
+        # the value is (x, y) location on the sprite sheet in 8px blocks
         YELLOW = (0, 0)
         GREEN = (0, 16)
         PURPLE = (16, 16)
@@ -36,58 +37,57 @@ class Tank(GameObject):
             }[self]
 
     MOVE_FRAMES = 2
+    POSSIBLE_MOVE_STATES = 0, 2
 
-    def get_sprite(self, color: Color, type: Type, direction: Direction, state):
+    def get_sprite_location(self, color: Color, type: Type, direction: Direction, state):
+        # see: atlas.png to understand this code:
         x = color.value[0] + direction.value + state
         y = color.value[1] + type.value
-        return self.atlas.image_at(x, y, 2, 2)
+        return x, y, 2, 2
 
     def __init__(self, atlas: SpriteSheet, color=Color.YELLOW, tank_type=Type.LEVEL_1):
         super().__init__()
         self.atlas = atlas
+
         self.direction = self.Direction.UP
         self.color = color
         self.tank_type = tank_type
-        self.moving = False
-        self.move_step = 0
-        self.cnt = 0
+
         self.x = 0
         self.y = 0
-        self.sprites = {(d, s): self.get_sprite(color, tank_type, d, s)
-                        for d in self.Direction
-                        for s in (0, 2)}
+
+        self.moving = False
+        self.cnt = 0
+        self.move_state = 0
+
+        sprite_locations = {(d, s): self.get_sprite_location(color, tank_type, d, s)
+                            for d in self.Direction
+                            for s in self.POSSIBLE_MOVE_STATES}
+
+        self.sprites = {key: self.atlas.image_at(*location, auto_crop=True)
+                        for key, location in sprite_locations.items()}
 
     def place(self, x, y):
         self.x = x
         self.y = y
 
+    @property
+    def sprite_key(self):
+        return self.direction, self.move_state
+
     def render(self, screen):
-        sprite = self.sprites[(self.direction, self.move_step * 2)]
+        sprite = self.sprites[self.sprite_key]
+        cx = round(sprite.get_width() / 2)
+        cy = round(sprite.get_height() / 2)
 
-        # sprites for some tank types are not aligned wall, so we add ex and ey
-        # so movement is smooth without jumps when you change the direction to the opposite one
-        if self.direction in (self.Direction.LEFT, self.Direction.RIGHT):
-            ex, ey = 0, 2
-        else:
-            ex, ey = 2, 0
-
-        if self.tank_type in (self.Type.ENEMY_MIDDLE, self.Type.ENEMY_FAST, self.Type.ENEMY_SIMPLE):
-            if self.direction == self.Direction.LEFT:
-                ey -= 2
-
-        if self.tank_type == self.Type.ENEMY_MIDDLE:
-            if self.direction == self.Direction.DOWN:
-                ex += 2
-
-        screen.blit(sprite, (self.x + ex,
-                             self.y + ey))
+        screen.blit(sprite, (self.x - cx, self.y - cy))
 
         # animate sprite when moving
         if self.moving:
             self.cnt += 1
             if self.cnt >= self.MOVE_FRAMES:
                 self.cnt = 0
-                self.move_step = 1 - self.move_step
+                self.move_state = 2 - self.move_state
 
     @property
     def gun_point(self):
@@ -96,30 +96,25 @@ class Tank(GameObject):
         :return: (x, y) coordinates of gun tip point
         """
         x, y = self.x, self.y
-        w = h = 2 * self.atlas.upsample * self.atlas.sprite_size
-        xs = x + w // 2
-        ys = y + h // 2
-        shift = 2
+        _, _, w, h = self.bounding_rect
+        half_w, half_h = round(w / 2), round(h / 2)
 
         d = self.direction
         if d == self.Direction.UP:
-            return xs, y - shift
+            return x, y - half_h
         elif d == self.Direction.DOWN:
-            return xs, y + h + shift
+            return x, y + half_h
         elif d == self.Direction.LEFT:
-            return x - shift, ys
+            return x - half_w, y
         elif d == self.Direction.RIGHT:
-            return x + w + shift, ys
+            return x + half_w, y
 
     @property
     def center_point(self):
-        x, y = self.x, self.y
-        w = h = 2 * self.atlas.upsample * self.atlas.sprite_size
-        xs = x + w // 2
-        ys = y + h // 2
-        return xs, ys
+        return self.x, self.y
 
     @property
     def bounding_rect(self):
-        size = 2 * self.atlas.real_sprite_size
-        return self.x, self.y, size, size
+        sprite = self.sprites[self.sprite_key]
+        w, h = sprite.get_width(), sprite.get_height()
+        return self.x - round(w / 2), self.y - round(h / 2), w, h
