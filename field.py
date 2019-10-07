@@ -37,11 +37,11 @@ class Field(GameObject):
 
         @property
         def can_tank_run_here(self):
-            return self in [
+            return self in (
                 self.FREE,
                 self.SKATE,
                 self.GREEN
-            ]
+            )
 
         @classmethod
         def from_symbol(cls, s):
@@ -61,7 +61,7 @@ class Field(GameObject):
         self.atlas = atlas
 
         self.origin = (40, 40)
-        self.step = self.atlas.sprite_size * 2
+        self.step = self.atlas.real_sprite_size
 
         # addressing: self.cells[x or column][y or row]
         self.cells = [
@@ -94,10 +94,11 @@ class Field(GameObject):
         xs, ys = self.origin
         col = floor((x - xs) / self.step)
         row = floor((y - ys) / self.step)
-        if not (0 <= col < self.WIDTH and 0 <= row < self.HEIGHT):
-            return self.CellType.FREE
-        else:
+
+        if 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT:
             return self.cells[col][row]
+        else:
+            return self.CellType.CONCRETE
 
     @property
     def rect(self):
@@ -121,8 +122,12 @@ class Field(GameObject):
         x, y, w, h = rect
         check_pts = (
             (x, y),
-            (x + w, y),
-            (x, y + h),
-            (x + w, y + h)
+            (x + w - 1, y),
+            (x, y + h - 1),
+            (x + w - 1, y + h - 1)
         )
-        return all(self.cell_by_coords(chpt_x, chpt_y).can_tank_run_here for chpt_x, chpt_y in check_pts)
+        return any(not self.cell_by_coords(*coords).can_tank_run_here for coords in check_pts)
+
+    def get_center_of_cell(self, col, row):
+        xs, ys = self.origin
+        return xs + col * self.step, ys + row * self.step

@@ -59,3 +59,8 @@ class GameObject:
     @property
     def total_children(self):
         return 1 + sum(child.total_children for child in self._children)
+
+
+def trim_rect(rect, amount):
+    x, y, w, h = rect
+    return x + amount, y + amount, w - amount * 2, h - amount * 2

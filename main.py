@@ -10,7 +10,7 @@ from util import *
 
 
 class Game:
-    TANK_SPEED = 4
+    TANK_SPEED = 8
 
     def __init__(self):
         self.atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
@@ -23,12 +23,12 @@ class Game:
         self.scene.add_child(self.field)
 
         tank = self.tank = Tank(self.atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
-        tank.place(*self.field.coord_by_col_and_row(0, 0))
+        tank.place(*self.field.get_center_of_cell(1, 1))
         self.scene.add_child(tank)
 
-        tank2 = Tank(self.atlas, Tank.Color.GREEN, Tank.Type.LEVEL_4)
-        tank2.place(*self.field.coord_by_col_and_row(2, 0))
-        self.scene.add_child(tank2)
+        # tank2 = Tank(self.atlas, Tank.Color.GREEN, Tank.Type.LEVEL_4)
+        # tank2.place(*self.field.coord_by_col_and_row(2, 0))
+        # self.scene.add_child(tank2)
 
         self.font_debug = pygame.font.Font(None, 18)
 
@@ -72,10 +72,10 @@ class Game:
         vy *= self.TANK_SPEED
         tank.x += vx
         tank.y += vy
-        # if self.field.intersect_rect(tank.bounding_rect):
-        #     # undo movement
-        #     tank.x -= vx
-        #     tank.y -= vy
+        if self.field.intersect_rect(trim_rect(tank.bounding_rect, 1)):
+            # undo movement
+            tank.x -= vx
+            tank.y -= vy
 
 
 if __name__ == '__main__':
