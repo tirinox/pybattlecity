@@ -24,12 +24,16 @@ class Projectile(GameObject):
             (1, 0): atlas.image_at(43, 12, 1, 2)
         }[(vx, vy)]
 
+    @property
+    def on_screen(self):
+        return 0 < self.x < GAME_WIDTH and 0 < self.y < GAME_HEIGHT
+
     def render(self, screen):
         screen.blit(self.sprite, (self.x + self.CENTRAL_SHIFT_X,
                                   self.y + self.CENTRAL_SHIFT_Y))
         self.x += self.vx * self.SPEED
         self.y += self.vy * self.SPEED
 
-        if not (0 < self.x < GAME_WIDTH and 0 < self.y < GAME_HEIGHT):
+        if not self.on_screen:
             self.remove_from_parent()
 

@@ -12,13 +12,15 @@ class Explosion(GameObject):
     )
 
     N_STATES = len(SPRITE_DESCRIPTORS)
+    N_STATES_SHORT = 3
 
-    def __init__(self, atlas: SpriteSheet, x, y):
+    def __init__(self, atlas: SpriteSheet, x, y, short=False):
         super().__init__()
         self.atlas = atlas
         self.x = x
         self.y = y
-        self.animator = Animator(0.08, self.N_STATES, once=True)
+        n = self.N_STATES_SHORT if short else self.N_STATES
+        self.animator = Animator(0.08, n, once=True)
         self.sprites = [atlas.image_at(x, y, sx, sy) for
                         x, y, sx, sy in self.SPRITE_DESCRIPTORS]
 

@@ -4,6 +4,7 @@ from enum import Enum, auto
 import pygame
 from math import floor
 from projectile import Projectile
+from explosion import Explosion
 
 
 class Field(GameObject):
@@ -164,6 +165,8 @@ class Field(GameObject):
         cell = self.cell_by_coords(p.x, p.y)
         if cell.solid:
             p.remove_from_parent()
+            expl = Explosion(self.atlas, p.x, p.y, short=True)
+            self.add_child(expl)
             if cell == cell.BRICK:
                 self.set_cell_by_coord(p.x, p.y, cell.FREE)
 
