@@ -7,6 +7,7 @@ from projectile import Projectile
 from explosion import Explosion
 from tank import Tank
 from util import *
+from math import floor, ceil
 
 
 class Game:
@@ -78,10 +79,23 @@ class Game:
         vy *= self.TANK_SPEED
         tank.x += vx
         tank.y += vy
-        if self.field.intersect_rect(trim_rect(tank.bounding_rect, 1)):
+        if self.field.intersect_rect(tank.bounding_rect):
             # undo movement
             tank.x -= vx
             tank.y -= vy
+
+    def complete_moving(self):
+        discrete_step = self.atlas.sprite_size
+        if self.tank.moving:
+            vx, vy = self.tank.direction.vector
+            if vx != 0:
+                f = floor if vx < 0 else ceil
+                tank.x = f(tank.x / discrete_step) * discrete_step
+            if vy != 0:
+                f = floor if vy < 0 else ceil
+                tank.y = f(tank.y / discrete_step) * discrete_step
+
+        self.tank.moving = False
 
 
 
@@ -110,7 +124,6 @@ if __name__ == '__main__':
         keys = pygame.key.get_pressed()
 
         tank = game.tank
-        tank.moving = False
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             game.move_tank(tank.Direction.UP)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
@@ -119,6 +132,8 @@ if __name__ == '__main__':
             game.move_tank(tank.Direction.LEFT)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             game.move_tank(tank.Direction.RIGHT)
+        else:
+            game.complete_moving()
 
         screen.fill((128, 128, 128))
 

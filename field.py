@@ -139,12 +139,20 @@ class Field(GameObject):
                     screen.blit(self.sprites[cell], coords)
 
     def intersect_rect(self, rect):
-        x, y, w, h = rect
+        x1, y1, w, h = rect
+        x2 = x1 + w - 1
+        y2 = y1 + h - 1
+        xc = x1 + w // 2
+        yc = y1 + h // 2
         check_pts = (
-            (x, y),
-            (x + w - 1, y),
-            (x, y + h - 1),
-            (x + w - 1, y + h - 1)
+            (x1, y1),
+            (x2, y1),
+            (x1, y2),
+            (x2, y2),
+            (xc, y1),
+            (xc, y2),
+            (x1, yc),
+            (x2, yc)
         )
         return any(not self.cell_by_coords(*coords).can_tank_run_here for coords in check_pts)
 
