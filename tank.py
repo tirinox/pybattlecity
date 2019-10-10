@@ -21,21 +21,6 @@ class Tank(GameObject):
         ENEMY_MIDDLE = 12
         ENEMY_HEAVY = 14
 
-    class Direction(Enum):
-        UP = 0
-        LEFT = 4
-        DOWN = 8
-        RIGHT = 12
-
-        @property
-        def vector(self):
-            return {
-                self.UP: (0, -1),
-                self.DOWN: (0, 1),
-                self.LEFT: (-1, 0),
-                self.RIGHT: (1, 0)
-            }[self]
-
     MOVE_FRAMES = 2
     POSSIBLE_MOVE_STATES = 0, 2
 
@@ -48,7 +33,7 @@ class Tank(GameObject):
     def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1):
         super().__init__()
 
-        self.direction = self.Direction.UP
+        self.direction = Direction.UP
         self.color = color
         self.tank_type = tank_type
 
@@ -60,7 +45,7 @@ class Tank(GameObject):
         self.move_state = 0
 
         sprite_locations = {(d, s): self.get_sprite_location(color, tank_type, d, s)
-                            for d in self.Direction
+                            for d in Direction
                             for s in self.POSSIBLE_MOVE_STATES}
 
         self.sprites = {key: ATLAS().image_at(*location, auto_crop=True)
@@ -99,13 +84,13 @@ class Tank(GameObject):
         half_w, half_h = round(w / 2), round(h / 2)
 
         d = self.direction
-        if d == self.Direction.UP:
+        if d == Direction.UP:
             return x, y - half_h
-        elif d == self.Direction.DOWN:
+        elif d == Direction.DOWN:
             return x, y + half_h
-        elif d == self.Direction.LEFT:
+        elif d == Direction.LEFT:
             return x - half_w, y
-        elif d == self.Direction.RIGHT:
+        elif d == Direction.RIGHT:
             return x + half_w, y
 
     @property

@@ -1,4 +1,4 @@
-from util import GameObject
+from util import GameObject, Direction
 from config import ATLAS
 from enum import Enum, auto
 import pygame
@@ -18,6 +18,7 @@ class Field(GameObject):
         CONCRETE = auto()
         GREEN = auto()
         SKATE = auto()
+
 
         @property
         def sprite_location(self):
@@ -65,6 +66,10 @@ class Field(GameObject):
                 self.BRICK_LEFT,
                 self.BRICK_RIGHT
             )
+
+        @property
+        def is_half_brick(self):
+            return self.brick and self != self.BRICK
 
         @classmethod
         def from_symbol(cls, s):
@@ -170,18 +175,25 @@ class Field(GameObject):
         xs, ys = self.origin
         return xs + col * self.step, ys + row * self.step
 
-    def _check_hit(self, x, y):
+    def _check_hit(self, x, y, d: Direction):
         cell = self.cell_by_coords(x, y)
         if cell.solid:
             if cell == cell.BRICK:
+                self.set_cell_by_coord(x, y, {
+                    Direction.LEFT: cell.BRICK_LEFT,
+                    Direction.RIGHT: cell.BRICK_RIGHT,
+                    Direction.UP: cell.BRICK_TOP,
+                    Direction.DOWN: cell.BRICK_BOTTOM
+                }[d])
+            elif cell.is_half_brick:
                 self.set_cell_by_coord(x, y, cell.FREE)
             return True
         return False
 
     def check_hit(self, p: Projectile):
         (x1, y1), (x2, y2) = p.split_in_two_coords()
-        r1 = self._check_hit(x1, y1)
-        r2 = self._check_hit(x2, y2)
+        r1 = self._check_hit(x1, y1, p.direction)
+        r2 = self._check_hit(x2, y2, p.direction)
         if r1 or r2:
             p.remove_from_parent()
             expl = Explosion(p.x, p.y, short=True)

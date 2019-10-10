@@ -1,8 +1,25 @@
 import time
 from collections import OrderedDict
+from enum import Enum
 
 
 COLOR_BLACK_KEY = (0, 0, 1, 255)
+
+
+class Direction(Enum):
+    UP = 0
+    LEFT = 4
+    DOWN = 8
+    RIGHT = 12
+
+    @property
+    def vector(self):
+        return {
+            self.UP: (0, -1),
+            self.DOWN: (0, 1),
+            self.LEFT: (-1, 0),
+            self.RIGHT: (1, 0)
+        }[self]
 
 
 class Animator:

@@ -63,11 +63,10 @@ class Game:
 
     def fire(self):
         pt = self.tank.gun_point
-        dir = self.tank.direction.vector
-        projectile = Projectile(*pt, *dir, 1)
+        projectile = Projectile(*pt, self.tank.direction, 1)
         self.projectiles.add_child(projectile)
 
-    def move_tank(self, direction: Tank.Direction):
+    def move_tank(self, direction: Direction):
         tank = self.tank
         tank.moving = True
         tank.direction = direction
@@ -120,13 +119,13 @@ if __name__ == '__main__':
 
         tank = game.tank
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            game.move_tank(tank.Direction.UP)
+            game.move_tank(Direction.UP)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            game.move_tank(tank.Direction.DOWN)
+            game.move_tank(Direction.DOWN)
         elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            game.move_tank(tank.Direction.LEFT)
+            game.move_tank(Direction.LEFT)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            game.move_tank(tank.Direction.RIGHT)
+            game.move_tank(Direction.RIGHT)
         else:
             game.complete_moving()
 
