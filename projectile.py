@@ -1,14 +1,14 @@
 from util import *
 from config import *
-from spritesheet import SpriteSheet
+import pygame
 
 
 class Projectile(GameObject):
     CENTRAL_SHIFT_X = -8
-    CENTRAL_SHIFT_Y = -14
+    CENTRAL_SHIFT_Y = -15
     SPEED = 8
 
-    def __init__(self, atlas: SpriteSheet, x, y, vx, vy, power):
+    def __init__(self, x, y, vx, vy, power):
         super().__init__()
 
         self.x = x
@@ -18,10 +18,10 @@ class Projectile(GameObject):
         self.power = power
 
         self.sprite = {
-            (0, -1): atlas.image_at(40, 12, 1, 2),
-            (-1, 0): atlas.image_at(41, 12, 1, 2),
-            (0, 1): atlas.image_at(42, 12, 1, 2),
-            (1, 0): atlas.image_at(43, 12, 1, 2)
+            (0, -1): ATLAS().image_at(40, 12, 1, 2),
+            (-1, 0): ATLAS().image_at(41, 12, 1, 2),
+            (0, 1): ATLAS().image_at(42, 12, 1, 2),
+            (1, 0): ATLAS().image_at(43, 12, 1, 2)
         }[(vx, vy)]
 
     @property
@@ -34,6 +34,19 @@ class Projectile(GameObject):
         self.x += self.vx * self.SPEED
         self.y += self.vy * self.SPEED
 
+        # p1, p2 = self.split_in_two_coords()
+        # pygame.draw.circle(screen, (255, 0, 255), p1, 2)
+        # pygame.draw.circle(screen, (255, 0, 255), p2, 2)
+
         if not self.on_screen:
             self.remove_from_parent()
 
+    def split_in_two_coords(self):
+        x, y = self.x, self.y
+        distance = ATLAS().real_sprite_size // 2
+        px, py = self.vy * distance, -self.vx * distance
+
+        return (
+            (x + px, y + py),
+            (x - px, y - py)
+        )

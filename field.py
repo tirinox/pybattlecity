@@ -1,5 +1,5 @@
 from util import GameObject
-from spritesheet import SpriteSheet
+from config import ATLAS
 from enum import Enum, auto
 import pygame
 from math import floor
@@ -56,6 +56,16 @@ class Field(GameObject):
                 self.CONCRETE
             )
 
+        @property
+        def brick(self):
+            return self in (
+                self.BRICK,
+                self.BRICK_TOP,
+                self.BRICK_BOTTOM,
+                self.BRICK_LEFT,
+                self.BRICK_RIGHT
+            )
+
         @classmethod
         def from_symbol(cls, s):
             return {
@@ -69,12 +79,11 @@ class Field(GameObject):
     HEIGHT = WIDTH = 13 * 2  # 13 full blocks by (2x2) cells each
     BACKGROUND_COLOR = (0, 0, 0)
 
-    def __init__(self, atlas: SpriteSheet):
+    def __init__(self):
         super().__init__()
-        self.atlas = atlas
 
         self.origin = (40, 40)
-        self.step = self.atlas.real_sprite_size
+        self.step = ATLAS().real_sprite_size
 
         # addressing: self.cells[x or column][y or row]
         self.cells = [
@@ -83,7 +92,7 @@ class Field(GameObject):
         ]
 
         self.sprites = {
-            t: self.atlas.image_at(*t.sprite_location, 1, 1, colorkey=None) for t in Field.CellType
+            t: ATLAS().image_at(*t.sprite_location, 1, 1, colorkey=None) for t in Field.CellType
         }
 
     def load_from_file(self, filename):
@@ -161,13 +170,19 @@ class Field(GameObject):
         xs, ys = self.origin
         return xs + col * self.step, ys + row * self.step
 
-    def check_hit(self, p: Projectile):
-        cell = self.cell_by_coords(p.x, p.y)
+    def _check_hit(self, x, y):
+        cell = self.cell_by_coords(x, y)
         if cell.solid:
-            p.remove_from_parent()
-            expl = Explosion(self.atlas, p.x, p.y, short=True)
-            self.add_child(expl)
             if cell == cell.BRICK:
-                self.set_cell_by_coord(p.x, p.y, cell.FREE)
+                self.set_cell_by_coord(x, y, cell.FREE)
+            return True
+        return False
 
-
+    def check_hit(self, p: Projectile):
+        (x1, y1), (x2, y2) = p.split_in_two_coords()
+        r1 = self._check_hit(x1, y1)
+        r2 = self._check_hit(x2, y2)
+        if r1 or r2:
+            p.remove_from_parent()
+            expl = Explosion(p.x, p.y, short=True)
+            self.add_child(expl)

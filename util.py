@@ -1,6 +1,5 @@
 import time
 from collections import OrderedDict
-import pygame
 
 
 COLOR_BLACK_KEY = (0, 0, 1, 255)

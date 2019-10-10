@@ -1,36 +1,33 @@
 import pygame
 from pygame.locals import *
-from config import *
-import spritesheet
 from field import Field
 from projectile import Projectile
-from explosion import Explosion
 from tank import Tank
 from util import *
+from explosion import Explosion
 from math import floor, ceil
+from config import *
 
 
 class Game:
     TANK_SPEED = 4
 
     def __init__(self):
-        self.atlas = spritesheet.SpriteSheet(ATLAS, upsample=2, sprite_size=8)
-
         self.scene = GameObject()
 
-        self.field = Field(self.atlas)
+        self.field = Field()
         self.field.load_from_file('data/level1.txt')
 
         self.scene.add_child(self.field)
 
-        tank = self.tank = Tank(self.atlas, Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
+        tank = self.tank = Tank(Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
         tank.place(*self.field.get_center_of_cell(1, 1))
         self.scene.add_child(tank)
 
         self.projectiles = GameObject()
         self.scene.add_child(self.projectiles)
 
-        # tank2 = Tank(self.atlas, Tank.Color.GREEN, Tank.Type.LEVEL_4)
+        # tank2 = Tank(Tank.Color.GREEN, Tank.Type.LEVEL_4)
         # tank2.place(*self.field.coord_by_col_and_row(2, 0))
         # self.scene.add_child(tank2)
 
@@ -43,14 +40,14 @@ class Game:
         types = list(Tank.Type)
         current_index = types.index(t)
         next_type = types[(current_index + 1) % len(types)]
-        tank = Tank(self.atlas, Tank.Color.PLAIN, next_type)
+        tank = Tank(Tank.Color.PLAIN, next_type)
         tank.x, tank.y = x, y
         tank.direction = d
         self.scene.add_child(tank)
         self.tank = tank
 
     def make_explosion(self):
-        expl = Explosion(self.atlas, *self.tank.center_point)
+        expl = Explosion(*self.tank.center_point)
         self.scene.add_child(expl)
 
     def render(self, screen):
@@ -67,7 +64,7 @@ class Game:
     def fire(self):
         pt = self.tank.gun_point
         dir = self.tank.direction.vector
-        projectile = Projectile(self.atlas, *pt, *dir, 1)
+        projectile = Projectile(*pt, *dir, 1)
         self.projectiles.add_child(projectile)
 
     def move_tank(self, direction: Tank.Direction):
@@ -85,7 +82,7 @@ class Game:
             tank.y -= vy
 
     def complete_moving(self):
-        discrete_step = self.atlas.sprite_size
+        discrete_step = ATLAS().real_sprite_size // 2
         if self.tank.moving:
             vx, vy = self.tank.direction.vector
             if vx != 0:
@@ -98,10 +95,8 @@ class Game:
         self.tank.moving = False
 
 
-
 if __name__ == '__main__':
     pygame.init()
-
     screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
 
     game = Game()
@@ -141,7 +136,7 @@ if __name__ == '__main__':
 
         # pygame.draw.rect(screen, (255, 255, 0), game.tank.bounding_rect, 1)
         # pygame.draw.circle(screen, (0, 0, 255), game.tank.center_point, 4, 1)
-        # pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
+        pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
 
         pygame.display.flip()
 

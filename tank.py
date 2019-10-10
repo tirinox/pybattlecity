@@ -1,4 +1,4 @@
-from spritesheet import SpriteSheet
+from config import *
 from enum import Enum
 from util import *
 
@@ -45,9 +45,8 @@ class Tank(GameObject):
         y = color.value[1] + type.value
         return x, y, 2, 2
 
-    def __init__(self, atlas: SpriteSheet, color=Color.YELLOW, tank_type=Type.LEVEL_1):
+    def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1):
         super().__init__()
-        self.atlas = atlas
 
         self.direction = self.Direction.UP
         self.color = color
@@ -64,7 +63,7 @@ class Tank(GameObject):
                             for d in self.Direction
                             for s in self.POSSIBLE_MOVE_STATES}
 
-        self.sprites = {key: self.atlas.image_at(*location, auto_crop=True)
+        self.sprites = {key: ATLAS().image_at(*location, auto_crop=True)
                         for key, location in sprite_locations.items()}
 
     def place(self, x, y):
