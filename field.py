@@ -19,7 +19,6 @@ class Field(GameObject):
         GREEN = auto()
         SKATE = auto()
 
-
         @property
         def sprite_location(self):
             return {
@@ -88,15 +87,15 @@ class Field(GameObject):
         super().__init__()
 
         self.origin = (40, 40)
-        self.step = ATLAS().real_sprite_size
+        self._step = ATLAS().real_sprite_size
 
         # addressing: self.cells[x or column][y or row]
-        self.cells = [
+        self._cells = [
             [Field.CellType.FREE for _ in range(self.HEIGHT)]
             for _ in range(self.WIDTH)
         ]
 
-        self.sprites = {
+        self._sprites = {
             t: ATLAS().image_at(*t.sprite_location, 1, 1, colorkey=None) for t in Field.CellType
         }
 
@@ -107,37 +106,40 @@ class Field(GameObject):
         for _, (y, line) in zip(range(self.HEIGHT), enumerate(lines)):
             assert len(line) >= self.WIDTH, "incomplete line"
             for _, (x, symbol) in zip(range(self.WIDTH), enumerate(line)):
-                self.cells[x][y] = self.CellType.from_symbol(symbol)
+                self._cells[x][y] = self.CellType.from_symbol(symbol)
                 print(symbol, end='')
             print()
 
     def coord_by_col_and_row(self, col, row):
         xs, ys = self.origin
-        x = xs + col * self.step
-        y = ys + row * self.step
+        x = xs + col * self._step
+        y = ys + row * self._step
         return x, y
 
     def col_row_from_coords(self, x, y):
         xs, ys = self.origin
-        col = floor((x - xs) / self.step)
-        row = floor((y - ys) / self.step)
+        col = floor((x - xs) / self._step)
+        row = floor((y - ys) / self._step)
         return col, row
+
+    def inside_field_col_row(self, col, row):
+        return 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT
 
     def cell_by_coords(self, x, y):
         col, row = self.col_row_from_coords(x, y)
-        if 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT:
-            return self.cells[col][row]
+        if self.inside_field_col_row(col, row):
+            return self._cells[col][row]
         else:
             return self.CellType.CONCRETE
 
     def set_cell_by_coord(self, x, y, cell: CellType):
         col, row = self.col_row_from_coords(x, y)
-        if 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT:
-            self.cells[col][row] = cell
+        if self.inside_field_col_row(col, row):
+            self._cells[col][row] = cell
 
     @property
     def rect(self):
-        return [*self.origin, self.step * self.WIDTH, self.step * self.HEIGHT]
+        return [*self.origin, self._step * self.WIDTH, self._step * self.HEIGHT]
 
     def point_in_field(self, x, y):
         fx, fy, fw, fh = self.rect
@@ -148,12 +150,35 @@ class Field(GameObject):
 
         for col in range(self.WIDTH):
             for row in range(self.HEIGHT):
-                cell = self.cells[col][row]
+                cell = self._cells[col][row]
                 if cell != cell.FREE:
                     coords = self.coord_by_col_and_row(col, row)
-                    screen.blit(self.sprites[cell], coords)
+                    screen.blit(self._sprites[cell], coords)
 
     def intersect_rect(self, rect):
+        def can_tank_run_at(x, y):
+            col, row = self.col_row_from_coords(x, y)
+            if not self.inside_field_col_row(col, row):
+                return False
+
+            cell = self._cells[col][row]
+            if cell.is_half_brick:
+                # if its half brick then subdivide it in two
+                # transform x, y to coords inside the cell in %
+                xs, ys = self.origin
+                dx = (x - col * self._step - xs) / self._step
+                dy = (y - row * self._step - ys) / self._step
+                if cell == cell.BRICK_LEFT:
+                    return dx > 0.5
+                elif cell == cell.BRICK_RIGHT:
+                    return dx <= 0.5
+                elif cell == cell.BRICK_TOP:
+                    return dy >= 0.5
+                elif cell == cell.BRICK_BOTTOM:
+                    return dy < 0.5
+            else:
+                return cell.can_tank_run_here
+
         x1, y1, w, h = rect
         x2 = x1 + w - 1
         y2 = y1 + h - 1
@@ -169,11 +194,12 @@ class Field(GameObject):
             (x1, yc),
             (x2, yc)
         )
-        return any(not self.cell_by_coords(*coords).can_tank_run_here for coords in check_pts)
+
+        return any(not can_tank_run_at(x, y) for x, y in check_pts)
 
     def get_center_of_cell(self, col, row):
         xs, ys = self.origin
-        return xs + col * self.step, ys + row * self.step
+        return xs + col * self._step, ys + row * self._step
 
     def _check_hit(self, x, y, d: Direction):
         cell = self.cell_by_coords(x, y)
@@ -191,10 +217,11 @@ class Field(GameObject):
         return False
 
     def check_hit(self, p: Projectile):
-        (x1, y1), (x2, y2) = p.split_in_two_coords()
-        r1 = self._check_hit(x1, y1, p.direction)
-        r2 = self._check_hit(x2, y2, p.direction)
-        if r1 or r2:
+        p_group = p.split_for_aim()
+        # can't put it just into "any" because "any" is curcuit-cut operation,
+        # though we need for all "_check_hit" to be run!
+        p_results = [self._check_hit(x, y, p.direction) for x, y in p_group]
+        if any(p_results):
             p.remove_from_parent()
             expl = Explosion(p.x, p.y, short=True)
             self.add_child(expl)

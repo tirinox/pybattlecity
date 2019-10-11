@@ -34,20 +34,21 @@ class Projectile(GameObject):
         self.x += vx * self.SPEED
         self.y += vy * self.SPEED
 
-        # p1, p2 = self.split_in_two_coords()
-        # pygame.draw.circle(screen, (255, 0, 255), p1, 2)
-        # pygame.draw.circle(screen, (255, 0, 255), p2, 2)
+        ps = self.split_for_aim()
+        for p in ps:
+            pygame.draw.circle(screen, (255, 0, 255), p, 2)
 
         if not self.on_screen:
             self.remove_from_parent()
 
-    def split_in_two_coords(self):
+    def split_for_aim(self):
         x, y = self.x, self.y
         distance = ATLAS().real_sprite_size // 2
         vx, vy = self.direction.vector
-        px, py = vy * distance, -vx * distance
+        px, py = (vy * distance), (-vx * distance)
 
         return (
+            # (x - vx * distance, y - vy * distance),
             (x + px, y + py),
             (x - px, y - py)
         )
