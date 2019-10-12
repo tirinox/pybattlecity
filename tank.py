@@ -1,5 +1,4 @@
 from config import *
-from enum import Enum
 from util import *
 
 
@@ -21,7 +20,6 @@ class Tank(GameObject):
         ENEMY_MIDDLE = 12
         ENEMY_HEAVY = 14
 
-    MOVE_FRAMES = 2
     POSSIBLE_MOVE_STATES = 0, 2
 
     def get_sprite_location(self, color: Color, type: Type, direction: Direction, state):
@@ -41,15 +39,23 @@ class Tank(GameObject):
         self.y = 0
 
         self.moving = False
-        self.cnt = 0
-        self.move_state = 0
+        self.move_animator = Animator(delay=0.1, max_states=2)
+
+        atlas = ATLAS()
 
         sprite_locations = {(d, s): self.get_sprite_location(color, tank_type, d, s)
                             for d in Direction
                             for s in self.POSSIBLE_MOVE_STATES}
 
-        self.sprites = {key: ATLAS().image_at(*location, auto_crop=True)
+        self.sprites = {key: atlas.image_at(*location, auto_crop=True)
                         for key, location in sprite_locations.items()}
+
+        self.shield_timer = Timer(5)
+        self.shield_animator = Animator(delay=0.04, max_states=2)
+        self.shield_sprites = (
+            atlas.image_at(32, 18, 2, 2),
+            atlas.image_at(34, 18, 2, 2)
+        )
 
     def place(self, x, y):
         self.x = x
@@ -57,7 +63,7 @@ class Tank(GameObject):
 
     @property
     def sprite_key(self):
-        return self.direction, self.move_state
+        return self.direction, self.POSSIBLE_MOVE_STATES[self.move_animator.state]
 
     def render(self, screen):
         sprite = self.sprites[self.sprite_key]
@@ -68,10 +74,16 @@ class Tank(GameObject):
 
         # animate sprite when moving
         if self.moving:
-            self.cnt += 1
-            if self.cnt >= self.MOVE_FRAMES:
-                self.cnt = 0
-                self.move_state = 2 - self.move_state
+            self.move_animator()
+
+        if self.shield_timer():
+            shield_sprite = self.shield_sprites[self.shield_animator()]
+            cx, cy = self.center_point
+            sz = ATLAS().real_sprite_size
+            screen.blit(shield_sprite, (cx - sz, cy - sz))
+
+    def activate_shield(self):
+        self.shield_timer.start()
 
     @property
     def gun_point(self):

@@ -1,12 +1,13 @@
 from spritesheet import SpriteSheet
 
+DEBUG = False
+
 GAME_WIDTH = 540
 GAME_HEIGHT = 480
 
 ATLAS_FILE = 'data/atlas.png'
 
 _altas = None
-
 
 def get_atlas() -> SpriteSheet:
     global _altas

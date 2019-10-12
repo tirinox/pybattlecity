@@ -20,8 +20,9 @@ class Game:
 
         self.scene.add_child(self.field)
 
-        tank = self.tank = Tank(Tank.Color.PURPLE, Tank.Type.ENEMY_FAST)
+        tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
         tank.place(*self.field.get_center_of_cell(1, 1))
+        tank.activate_shield()
         self.scene.add_child(tank)
 
         self.projectiles = GameObject()
@@ -43,6 +44,7 @@ class Game:
         tank = Tank(Tank.Color.PLAIN, next_type)
         tank.x, tank.y = x, y
         tank.direction = d
+        tank.activate_shield()
         self.scene.add_child(tank)
         self.tank = tank
 
@@ -133,9 +135,10 @@ if __name__ == '__main__':
 
         game.render(screen)
 
-        # pygame.draw.rect(screen, (255, 255, 0), game.tank.bounding_rect, 1)
-        # pygame.draw.circle(screen, (0, 0, 255), game.tank.center_point, 4, 1)
-        pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
+        if DEBUG:
+            pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
+            # pygame.draw.rect(screen, (255, 255, 0), game.tank.bounding_rect, 1)
+            # pygame.draw.circle(screen, (0, 0, 255), game.tank.center_point, 4, 1)
 
         pygame.display.flip()
 

@@ -43,6 +43,23 @@ class Animator:
         return self.state
 
 
+class Timer(Animator):
+    def __init__(self, delay, paused=True):
+        super().__init__(delay, 1, once=True)
+        if paused:
+            self.done = True
+
+    def start(self):
+        self.done = False
+        self.state = 0
+        self.last_time = time.monotonic()
+
+    def __call__(self, *args, **kwargs):
+        if not self.done:
+            super().__call__()
+        return not self.done
+
+
 class GameObject:
     def __init__(self):
         self._parent = None

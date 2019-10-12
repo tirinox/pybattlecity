@@ -34,9 +34,10 @@ class Projectile(GameObject):
         self.x += vx * self.SPEED
         self.y += vy * self.SPEED
 
-        ps = self.split_for_aim()
-        for p in ps:
-            pygame.draw.circle(screen, (255, 0, 255), p, 2)
+        if DEBUG:
+            ps = self.split_for_aim()
+            for p in ps:
+                pygame.draw.circle(screen, (255, 0, 255), p, 2)
 
         if not self.on_screen:
             self.remove_from_parent()
