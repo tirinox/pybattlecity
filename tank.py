@@ -28,7 +28,7 @@ class Tank(GameObject):
         y = color.value[1] + type.value
         return x, y, 2, 2
 
-    def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1):
+    def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1, fire_delay=0.5):
         super().__init__()
 
         self.direction = Direction.UP
@@ -57,6 +57,14 @@ class Tank(GameObject):
             atlas.image_at(34, 18, 2, 2)
         )
 
+        self.fire_timer = Timer(fire_delay, paused=True)
+
+    def try_fire(self):
+        if self.fire_timer():
+            self.fire_timer.start()
+            return True
+        return False
+
     def place(self, x, y):
         self.x = x
         self.y = y
@@ -76,7 +84,7 @@ class Tank(GameObject):
         if self.moving:
             self.move_animator()
 
-        if self.shield_timer():
+        if not self.shield_timer.tick():
             shield_sprite = self.shield_sprites[self.shield_animator()]
             cx, cy = self.center_point
             sz = ATLAS().real_sprite_size

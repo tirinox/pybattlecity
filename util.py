@@ -54,10 +54,10 @@ class Timer(Animator):
         self.state = 0
         self.last_time = time.monotonic()
 
-    def __call__(self, *args, **kwargs):
+    def tick(self):
         if not self.done:
-            super().__call__()
-        return not self.done
+            self()
+        return self.done
 
 
 class GameObject:
