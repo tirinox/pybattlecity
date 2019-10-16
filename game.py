@@ -4,6 +4,7 @@ from projectile import Projectile
 from tank import Tank
 from util import *
 from explosion import Explosion
+from my_base import MyBase
 from math import floor, ceil
 from config import *
 
@@ -20,12 +21,16 @@ class Game:
         self.scene.add_child(self.field)
 
         tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
-        tank.place(*self.field.get_center_of_cell(1, 1))
+        tank.place(*self.field.get_center_of_cell(10, 25))
         tank.activate_shield()
         self.scene.add_child(tank)
 
         self.projectiles = GameObject()
         self.scene.add_child(self.projectiles)
+
+        self.my_base = base = MyBase()
+        base.x, base.y = self.field.coord_by_col_and_row(12, 24)
+        self.scene.add_child(base)
 
         # tank2 = Tank(Tank.Color.GREEN, Tank.Type.LEVEL_4)
         # tank2.place(*self.field.coord_by_col_and_row(2, 0))
@@ -47,8 +52,8 @@ class Game:
         self.scene.add_child(tank)
         self.tank = tank
 
-    def make_explosion(self):
-        expl = Explosion(*self.tank.center_point)
+    def make_explosion(self, x, y, short=False):
+        expl = Explosion(x, y, short)
         self.scene.add_child(expl)
 
     def render(self, screen):
@@ -59,8 +64,15 @@ class Game:
         dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
         screen.blit(dbg_label, (5, 5))
 
-        for p in self.projectiles:
-            self.field.check_hit(p)
+        for p in self.projectiles:  # type: Projectile
+            if self.field.check_hit(p):
+                p.remove_from_parent()
+                self.make_explosion(p.x, p.y, short=True)
+
+            if self.my_base.check_hit(p):
+                self.my_base.broken = True
+                p.remove_from_parent()
+                self.make_explosion(*self.my_base.center_point)
 
     def fire(self):
         tank = self.tank

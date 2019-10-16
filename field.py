@@ -221,7 +221,5 @@ class Field(GameObject):
         # can't put it just into "any" because "any" is curcuit-cut operation,
         # though we need for all "_check_hit" to be run!
         p_results = [self._check_hit(x, y, p.direction) for x, y in p_group]
-        if any(p_results):
-            p.remove_from_parent()
-            expl = Explosion(p.x, p.y, short=True)
-            self.add_child(expl)
+        return any(p_results)
+

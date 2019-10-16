@@ -21,8 +21,6 @@ if __name__ == '__main__':
                     game.switch_my_tank()
                 elif event.key == K_ESCAPE:
                     running = False
-                elif event.key == K_f:
-                    game.make_explosion()
                 elif event.key == K_SPACE:
                     game.fire()
 
