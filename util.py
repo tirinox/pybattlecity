@@ -100,3 +100,11 @@ class GameObject:
 def trim_rect(rect, amount):
     x, y, w, h = rect
     return x + amount, y + amount, w - amount * 2, h - amount * 2
+
+
+def rect_intersection(a, b):
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+
+    return ax < bx + bw and ax + aw > bx and \
+           ay < by + bh and ay + ah > by

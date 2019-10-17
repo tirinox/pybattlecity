@@ -1,10 +1,9 @@
-from util import GameObject, Direction
+from util import GameObject, Direction, rect_intersection
 from config import ATLAS
 from enum import Enum, auto
 import pygame
 from math import floor
 from projectile import Projectile
-from explosion import Explosion
 
 
 class Field(GameObject):
@@ -78,7 +77,24 @@ class Field(GameObject):
                 'C': cls.CONCRETE,
                 'S': cls.SKATE,
                 'G': cls.GREEN,
+                'l': cls.BRICK_LEFT,
+                't': cls.BRICK_TOP,
+                'b': cls.BRICK_BOTTOM,
+                'r': cls.BRICK_RIGHT
             }[s]
+
+        def calculate_rect(self, x, y, step):
+            half = step // 2
+            if self == self.BRICK_RIGHT:
+                return x + half, y, half, step
+            elif self == self.BRICK_LEFT:
+                return x, y, half, step
+            elif self == self.BRICK_BOTTOM:
+                return x, y + half, step, half
+            elif self == self.BRICK_TOP:
+                return x, y, step, half
+            else:
+                return x, y, step, step
 
     HEIGHT = WIDTH = 13 * 2  # 13 full blocks by (2x2) cells each
     BACKGROUND_COLOR = (0, 0, 0)
@@ -155,47 +171,43 @@ class Field(GameObject):
                     coords = self.coord_by_col_and_row(col, row)
                     screen.blit(self._sprites[cell], coords)
 
-    def intersect_rect(self, rect):
-        def can_tank_run_at(x, y):
-            col, row = self.col_row_from_coords(x, y)
-            if not self.inside_field_col_row(col, row):
-                return False
+    def intersect_rect(self, test_rect):
+        x1, y1, w, h = test_rect
+        x2 = x1 + w
+        y2 = y1 + h
 
-            cell = self._cells[col][row]
-            if cell.is_half_brick:
-                # if its half brick then subdivide it in two
-                # transform x, y to coords inside the cell in %
-                xs, ys = self.origin
-                dx = (x - col * self._step - xs) / self._step
-                dy = (y - row * self._step - ys) / self._step
-                if cell == cell.BRICK_LEFT:
-                    return dx > 0.5
-                elif cell == cell.BRICK_RIGHT:
-                    return dx <= 0.5
-                elif cell == cell.BRICK_TOP:
-                    return dy >= 0.5
-                elif cell == cell.BRICK_BOTTOM:
-                    return dy < 0.5
-            else:
-                return cell.can_tank_run_here
-
-        x1, y1, w, h = rect
-        x2 = x1 + w - 1
-        y2 = y1 + h - 1
-        xc = x1 + w // 2
-        yc = y1 + h // 2
         check_pts = (
             (x1, y1),
             (x2, y1),
             (x1, y2),
-            (x2, y2),
-            (xc, y1),
-            (xc, y2),
-            (x1, yc),
-            (x2, yc)
+            (x2, y2)
         )
 
-        return any(not can_tank_run_at(x, y) for x, y in check_pts)
+        rmax = cmax = -1
+        rmin, cmin = self.HEIGHT, self.WIDTH
+
+        for x, y in check_pts:
+            col, row = self.col_row_from_coords(x, y)
+            rmax = max(rmax, row)
+            rmin = min(rmin, row)
+            cmax = max(cmax, col)
+            cmin = min(cmin, col)
+
+        for c in range(cmin, cmax + 1):
+            for r in range(rmin, rmax + 1):
+                if not self.inside_field_col_row(c, r):
+                    return True
+
+                cell = self._cells[c][r]
+
+                if not cell.can_tank_run_here:
+                    x, y = self.coord_by_col_and_row(c, r)
+                    abs_cell_rect = cell.calculate_rect(x, y, self._step)
+                    if rect_intersection(test_rect, abs_cell_rect):
+                        return True
+
+        return False
+
 
     def get_center_of_cell(self, col, row):
         xs, ys = self.origin
