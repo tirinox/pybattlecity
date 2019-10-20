@@ -108,3 +108,8 @@ def rect_intersection(a, b):
 
     return ax < bx + bw and ax + aw > bx and \
            ay < by + bh and ay + ah > by
+
+
+def point_in_rect(px, py, rect):
+    x, y, w, h = rect
+    return x < px < x + w and y < py < y + h

@@ -15,27 +15,37 @@ class Game:
     def __init__(self):
         self.scene = GameObject()
 
+        # field --
         self.field = Field()
         self.field.load_from_file('data/level1.txt')
-
         self.scene.add_child(self.field)
-
-        tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
-        tank.place(*self.field.get_center_of_cell(10, 25))
-        tank.activate_shield()
-        self.scene.add_child(tank)
-
-        self.projectiles = GameObject()
-        self.scene.add_child(self.projectiles)
 
         self.my_base = base = MyBase()
         base.x, base.y = self.field.coord_by_col_and_row(12, 24)
         self.scene.add_child(base)
 
-        # tank2 = Tank(Tank.Color.GREEN, Tank.Type.LEVEL_4)
-        # tank2.place(*self.field.coord_by_col_and_row(2, 0))
-        # self.scene.add_child(tank2)
+        # tanks --
+        self.tanks = GameObject()
+        self.scene.add_child(self.tanks)
 
+        tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
+        tank.place(*self.field.get_center_of_cell(10, 25))
+        tank.activate_shield()
+        self.tanks.add_child(tank)
+
+        enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
+        enemy_tank.direction = Direction.DOWN
+        enemy_tank.place(*self.field.get_center_of_cell(9, 1))
+        self.enemy_tank = enemy_tank
+        self.tanks.add_child(enemy_tank)
+
+        self.enemy_fire_timer = Timer(delay=1, paused=False)
+
+        # projectiles --
+        self.projectiles = GameObject()
+        self.scene.add_child(self.projectiles)
+
+        # else --
         self.font_debug = pygame.font.Font(None, 18)
 
     def switch_my_tank(self):
@@ -64,24 +74,36 @@ class Game:
         dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
         screen.blit(dbg_label, (5, 5))
 
+        if self.enemy_fire_timer.tick():
+            self.fire(self.enemy_tank)
+            self.enemy_fire_timer.start()
+
         for p in self.projectiles:  # type: Projectile
             if self.field.check_hit(p):
                 p.remove_from_parent()
                 self.make_explosion(p.x, p.y, short=True)
+                continue
 
             if self.my_base.check_hit(p):
                 self.my_base.broken = True
                 p.remove_from_parent()
                 self.make_explosion(*self.my_base.center_point)
+                continue
 
-    def fire(self):
-        tank = self.tank
+            for t in self.tanks:  # type: Tank
+                if t.check_hit(p):
+                    self.make_explosion(p.x, p.y)
+                    p.remove_from_parent()
+                    continue
+
+    def fire(self, tank=None):
+        tank = self.tank if tank is None else tank
         if tank.try_fire():
             projectile = Projectile(*tank.gun_point, tank.direction, 1)
             self.projectiles.add_child(projectile)
 
-    def move_tank(self, direction: Direction):
-        tank = self.tank
+    def move_tank(self, direction: Direction, tank=None):
+        tank = self.tank if tank is None else tank
         tank.moving = True
         tank.direction = direction
         vx, vy = direction.vector
@@ -89,7 +111,18 @@ class Game:
         vy *= self.TANK_SPEED
         tank.x += vx
         tank.y += vy
-        if self.field.intersect_rect(tank.bounding_rect):
+
+        push_back = self.field.intersect_rect(tank.bounding_rect)
+
+        if not push_back:
+            my_bb = tank.bounding_rect
+            for other_tank in self.tanks:  # type: Tank
+                if tank is not other_tank:
+                    if rect_intersection(my_bb, other_tank.bounding_rect):
+                        push_back = True
+                        break
+
+        if push_back:
             # undo movement
             tank.x -= vx
             tank.y -= vy

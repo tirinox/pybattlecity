@@ -1,5 +1,6 @@
 from config import *
 from util import *
+from projectile import Projectile
 
 
 class Tank(GameObject):
@@ -105,13 +106,13 @@ class Tank(GameObject):
 
         d = self.direction
         if d == Direction.UP:
-            return x, y - half_h
+            return x, y - half_h - 1
         elif d == Direction.DOWN:
-            return x, y + half_h
+            return x, y + half_h + 1
         elif d == Direction.LEFT:
-            return x - half_w, y
+            return x - half_w - 1, y
         elif d == Direction.RIGHT:
-            return x + half_w, y
+            return x + half_w + 1, y
 
     @property
     def center_point(self):
@@ -122,3 +123,6 @@ class Tank(GameObject):
         sprite = self.sprites[self.sprite_key]
         w, h = sprite.get_width(), sprite.get_height()
         return self.x - round(w / 2), self.y - round(h / 2), w, h
+
+    def check_hit(self, p: Projectile):
+        return point_in_rect(p.x, p.y, self.bounding_rect)
