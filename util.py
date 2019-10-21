@@ -1,6 +1,7 @@
 import time
 from collections import OrderedDict
 from enum import Enum
+from pygame import Surface
 
 
 COLOR_BLACK_KEY = (0, 0, 1, 255)
@@ -84,7 +85,7 @@ class GameObject:
             self._parent.remove_child(self)
             self._parent = None
 
-    def visit(self, screen):
+    def visit(self, screen: Surface):
         self.render(screen)
         for child in list(self._children.keys()):
             child.visit(screen)

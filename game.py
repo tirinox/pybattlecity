@@ -7,6 +7,7 @@ from explosion import Explosion
 from my_base import MyBase
 from math import floor, ceil
 from config import *
+from bonus import Bonus, BonusType
 
 
 class Game:
@@ -47,6 +48,11 @@ class Game:
 
         # else --
         self.font_debug = pygame.font.Font(None, 18)
+
+        # bonuses --
+        self.bonues = GameObject()
+        self.bonues.add_child(Bonus(BonusType.UPGRADE, *self.field.get_center_of_cell(7, 7)))
+        self.scene.add_child(self.bonues)
 
     def switch_my_tank(self):
         tank = self.tank
