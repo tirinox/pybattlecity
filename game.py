@@ -12,8 +12,6 @@ import random
 
 
 class Game:
-    TANK_SPEED = 4
-
     def __init__(self):
         self.r = random.Random()
 
@@ -24,9 +22,9 @@ class Game:
         self.field.load_from_file('data/level1.txt')
         self.scene.add_child(self.field)
 
-        self.my_base = base = MyBase()
-        base.position = self.field.coord_by_col_and_row(12, 24)
-        self.scene.add_child(base)
+        self.my_base = MyBase()
+        self.my_base.position = self.field.coord_by_col_and_row(12, 24)
+        self.scene.add_child(self.my_base)
 
         # tanks --
         self.tanks = GameObject()
@@ -78,21 +76,41 @@ class Game:
         self.tank = tank
 
     def make_explosion(self, x, y, short=False):
-        expl = Explosion(x, y, short)
-        self.scene.add_child(expl)
+        self.scene.add_child(Explosion(x, y, short))
 
-    def render(self, screen):
-        self.scene.visit(screen)
+    def fire(self, tank=None):
+        tank = self.tank if tank is None else tank
+        if tank.try_fire():
+            projectile = Projectile(*tank.gun_point, tank.direction, 1)
+            self.projectiles.add_child(projectile)
 
-        # - 1 because the scene is not literally an object
-        dbg_text = f'Objects: {self.scene.total_children - 1}'
-        dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
-        screen.blit(dbg_label, (5, 5))
+    def move_tank(self, direction: Direction, tank=None):
+        tank = self.tank if tank is None else tank
+        tank.move_tank(direction)
 
-        if self.enemy_fire_timer.tick():
-            self.fire(self.enemy_tank)
-            self.enemy_fire_timer.start()
+        push_back = self.field.intersect_rect(tank.bounding_rect)
 
+        if not push_back:
+            my_bb = tank.bounding_rect
+            for other_tank in self.tanks:  # type: Tank
+                if tank is not other_tank:
+                    if rect_intersection(my_bb, other_tank.bounding_rect):
+                        push_back = True
+                        break
+
+        if push_back:
+            tank.undo_move()
+
+    def complete_moving(self):
+        self.tank.stop_and_align_to_grid()
+
+    def update_bonuses(self):
+        for b in self.bonues:  # type: Bonus
+            if b.intersects_rect(self.tank.bounding_rect):
+                b.remove_from_parent()
+                self.make_bonus()
+
+    def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
             if self.field.check_hit(p):
                 p.remove_from_parent()
@@ -111,51 +129,20 @@ class Game:
                     p.remove_from_parent()
                     continue
 
-        for b in self.bonues:  # type: Bonus
-            if b.intersects_rect(self.tank.bounding_rect):
-                b.remove_from_parent()
-                self.make_bonus()
+    def update(self):
+        if self.enemy_fire_timer.tick():
+            self.fire(self.enemy_tank)
+            self.enemy_fire_timer.start()
 
-    def fire(self, tank=None):
-        tank = self.tank if tank is None else tank
-        if tank.try_fire():
-            projectile = Projectile(*tank.gun_point, tank.direction, 1)
-            self.projectiles.add_child(projectile)
+        self.update_bonuses()
+        self.update_projectiles()
 
-    def move_tank(self, direction: Direction, tank=None):
-        tank = self.tank if tank is None else tank
-        tank.moving = True
-        tank.direction = direction
-        old_position = tank.position
-        vx, vy = direction.vector
-        tank.move(vx * self.TANK_SPEED, vy * self.TANK_SPEED)
+    # ---- render ----
 
-        push_back = self.field.intersect_rect(tank.bounding_rect)
+    def render(self, screen):
+        self.scene.visit(screen)
 
-        if not push_back:
-            my_bb = tank.bounding_rect
-            for other_tank in self.tanks:  # type: Tank
-                if tank is not other_tank:
-                    if rect_intersection(my_bb, other_tank.bounding_rect):
-                        push_back = True
-                        break
-
-        if push_back:
-            # undo movement
-            tank.position = old_position
-
-    def complete_moving(self):
-        tank = self.tank
-        discrete_step = ATLAS().real_sprite_size // 2
-        if tank.moving:
-            x, y = tank.position
-            vx, vy = tank.direction.vector
-            if vx != 0:
-                f = floor if vx < 0 else ceil
-                x = f(x / discrete_step) * discrete_step
-            if vy != 0:
-                f = floor if vy < 0 else ceil
-                y = f(y / discrete_step) * discrete_step
-            tank.position = (x, y)
-
-        tank.moving = False
+        # - 1 because the scene is not literally an object
+        dbg_text = f'Objects: {self.scene.total_children - 1}'
+        dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
+        screen.blit(dbg_label, (5, 5))

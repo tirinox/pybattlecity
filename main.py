@@ -26,7 +26,6 @@ if __name__ == '__main__':
 
         keys = pygame.key.get_pressed()
 
-        tank = game.tank
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             game.move_tank(Direction.UP)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
@@ -40,6 +39,7 @@ if __name__ == '__main__':
 
         screen.fill((128, 128, 128))
 
+        game.update()
         game.render(screen)
 
         if DEBUG:

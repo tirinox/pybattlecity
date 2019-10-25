@@ -1,9 +1,13 @@
 from config import *
 from util import *
 from projectile import Projectile
+from math import ceil, floor
 
 
 class Tank(GameObject):
+    SPEED_NORMAL = 4
+    SPEED_FAST = 8
+
     class Color(Enum):
         # the value is (x, y) location on the sprite sheet in 8px blocks
         YELLOW = (0, 0)
@@ -29,6 +33,18 @@ class Tank(GameObject):
         y = color.value[1] + type.value
         return x, y, 2, 2
 
+    @property
+    def tank_type(self):
+        return self._tank_type
+
+    @tank_type.setter
+    def tank_type(self, t: Type):
+        self._tank_type = t
+        if t == t.ENEMY_FAST:
+            self.speed = self.SPEED_FAST
+        else:
+            self.speed = self.SPEED_NORMAL
+
     def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1, fire_delay=0.5):
         super().__init__()
 
@@ -38,6 +54,8 @@ class Tank(GameObject):
 
         self.moving = False
         self.move_animator = Animator(delay=0.1, max_states=2)
+
+        self.old_position = tuple(self.position)
 
         atlas = ATLAS()
 
@@ -121,3 +139,27 @@ class Tank(GameObject):
 
     def check_hit(self, p: Projectile):
         return point_in_rect(*p.position, self.bounding_rect)
+
+    def move_tank(self, direction: Direction):
+        self.moving = True
+        self.direction = direction
+        self.old_position = tuple(self.position)
+        vx, vy = direction.vector
+        self.move(vx * self.speed, vy * self.speed)
+
+    def undo_move(self):
+        self.position = tuple(self.old_position)
+
+    def stop_and_align_to_grid(self):
+        discrete_step = ATLAS().real_sprite_size // 2
+        if self.moving:
+            x, y = self.position
+            vx, vy = self.direction.vector
+            if vx != 0:
+                f = floor if vx < 0 else ceil
+                x = f(x / discrete_step) * discrete_step
+            if vy != 0:
+                f = floor if vy < 0 else ceil
+                y = f(y / discrete_step) * discrete_step
+            self.position = (x, y)
+        self.moving = False
