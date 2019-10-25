@@ -66,6 +66,18 @@ class GameObject:
         self._parent = None
         self._children = OrderedDict()
         self.position = (0, 0)
+        self.size = (0, 0)
+
+    def move(self, dx, dy):
+        x, y = self.position
+        self.position = x + dx, y + dy
+
+    @property
+    def bounding_rect(self):
+        return (*self.position, *self.size)
+
+    def intersects_rect(self, r):
+        return rect_intersection(r, self.bounding_rect)
 
     def __hash__(self):
         return id(self)

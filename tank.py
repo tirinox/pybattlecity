@@ -36,9 +36,6 @@ class Tank(GameObject):
         self.color = color
         self.tank_type = tank_type
 
-        self.x = 0
-        self.y = 0
-
         self.moving = False
         self.move_animator = Animator(delay=0.1, max_states=2)
 
@@ -66,10 +63,6 @@ class Tank(GameObject):
             return True
         return False
 
-    def place(self, x, y):
-        self.x = x
-        self.y = y
-
     @property
     def sprite_key(self):
         return self.direction, self.POSSIBLE_MOVE_STATES[self.move_animator.state]
@@ -79,7 +72,8 @@ class Tank(GameObject):
         cx = round(sprite.get_width() / 2)
         cy = round(sprite.get_height() / 2)
 
-        screen.blit(sprite, (self.x - cx, self.y - cy))
+        x, y = self.position
+        screen.blit(sprite, (x - cx, y - cy))
 
         # animate sprite when moving
         if self.moving:
@@ -100,7 +94,7 @@ class Tank(GameObject):
         Calculate the coordinates of the gun of the tank
         :return: (x, y) coordinates of gun tip point
         """
-        x, y = self.x, self.y
+        x, y = self.position
         _, _, w, h = self.bounding_rect
         half_w, half_h = round(w / 2), round(h / 2)
 
@@ -116,13 +110,14 @@ class Tank(GameObject):
 
     @property
     def center_point(self):
-        return self.x, self.y
+        return self.position
 
     @property
     def bounding_rect(self):
         sprite = self.sprites[self.sprite_key]
         w, h = sprite.get_width(), sprite.get_height()
-        return self.x - round(w / 2), self.y - round(h / 2), w, h
+        x, y = self.position
+        return x - round(w / 2), y - round(h / 2), w, h
 
     def check_hit(self, p: Projectile):
-        return point_in_rect(p.x, p.y, self.bounding_rect)
+        return point_in_rect(*p.position, self.bounding_rect)

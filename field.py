@@ -208,7 +208,6 @@ class Field(GameObject):
 
         return False
 
-
     def get_center_of_cell(self, col, row):
         xs, ys = self.origin
         return xs + col * self._step, ys + row * self._step

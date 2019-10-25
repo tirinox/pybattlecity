@@ -8,12 +8,15 @@ from my_base import MyBase
 from math import floor, ceil
 from config import *
 from bonus import Bonus, BonusType
+import random
 
 
 class Game:
     TANK_SPEED = 4
 
     def __init__(self):
+        self.r = random.Random()
+
         self.scene = GameObject()
 
         # field --
@@ -22,7 +25,7 @@ class Game:
         self.scene.add_child(self.field)
 
         self.my_base = base = MyBase()
-        base.x, base.y = self.field.coord_by_col_and_row(12, 24)
+        base.position = self.field.coord_by_col_and_row(12, 24)
         self.scene.add_child(base)
 
         # tanks --
@@ -30,13 +33,13 @@ class Game:
         self.scene.add_child(self.tanks)
 
         tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
-        tank.place(*self.field.get_center_of_cell(10, 25))
+        tank.position = self.field.get_center_of_cell(10, 25)
         tank.activate_shield()
         self.tanks.add_child(tank)
 
         enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
         enemy_tank.direction = Direction.DOWN
-        enemy_tank.place(*self.field.get_center_of_cell(9, 1))
+        enemy_tank.position = self.field.get_center_of_cell(9, 1)
         self.enemy_tank = enemy_tank
         self.tanks.add_child(enemy_tank)
 
@@ -51,18 +54,24 @@ class Game:
 
         # bonuses --
         self.bonues = GameObject()
-        self.bonues.add_child(Bonus(BonusType.UPGRADE, *self.field.get_center_of_cell(7, 7)))
         self.scene.add_child(self.bonues)
+        self.make_bonus()
+
+    def make_bonus(self):
+        col = self.r.randint(0, self.field.WIDTH - 1)
+        row = self.r.randint(0, self.field.HEIGHT - 1)
+        bonus = Bonus(BonusType.UPGRADE, *self.field.get_center_of_cell(col, row))
+        self.bonues.add_child(bonus)
 
     def switch_my_tank(self):
         tank = self.tank
         tank.remove_from_parent()
-        t, d, x, y = tank.tank_type, tank.direction, tank.x, tank.y
+        t, d, p = tank.tank_type, tank.direction, tank.position
         types = list(Tank.Type)
         current_index = types.index(t)
         next_type = types[(current_index + 1) % len(types)]
         tank = Tank(Tank.Color.PLAIN, next_type)
-        tank.x, tank.y = x, y
+        tank.position = p
         tank.direction = d
         tank.activate_shield()
         self.scene.add_child(tank)
@@ -87,7 +96,7 @@ class Game:
         for p in self.projectiles:  # type: Projectile
             if self.field.check_hit(p):
                 p.remove_from_parent()
-                self.make_explosion(p.x, p.y, short=True)
+                self.make_explosion(*p.position, short=True)
                 continue
 
             if self.my_base.check_hit(p):
@@ -98,9 +107,14 @@ class Game:
 
             for t in self.tanks:  # type: Tank
                 if t.check_hit(p):
-                    self.make_explosion(p.x, p.y)
+                    self.make_explosion(*p.position)
                     p.remove_from_parent()
                     continue
+
+        for b in self.bonues:  # type: Bonus
+            if b.intersects_rect(self.tank.bounding_rect):
+                b.remove_from_parent()
+                self.make_bonus()
 
     def fire(self, tank=None):
         tank = self.tank if tank is None else tank
@@ -112,11 +126,9 @@ class Game:
         tank = self.tank if tank is None else tank
         tank.moving = True
         tank.direction = direction
+        old_position = tank.position
         vx, vy = direction.vector
-        vx *= self.TANK_SPEED
-        vy *= self.TANK_SPEED
-        tank.x += vx
-        tank.y += vy
+        tank.move(vx * self.TANK_SPEED, vy * self.TANK_SPEED)
 
         push_back = self.field.intersect_rect(tank.bounding_rect)
 
@@ -130,19 +142,20 @@ class Game:
 
         if push_back:
             # undo movement
-            tank.x -= vx
-            tank.y -= vy
+            tank.position = old_position
 
     def complete_moving(self):
         tank = self.tank
         discrete_step = ATLAS().real_sprite_size // 2
-        if self.tank.moving:
-            vx, vy = self.tank.direction.vector
+        if tank.moving:
+            x, y = tank.position
+            vx, vy = tank.direction.vector
             if vx != 0:
                 f = floor if vx < 0 else ceil
-                tank.x = f(tank.x / discrete_step) * discrete_step
+                x = f(x / discrete_step) * discrete_step
             if vy != 0:
                 f = floor if vy < 0 else ceil
-                tank.y = f(tank.y / discrete_step) * discrete_step
+                y = f(y / discrete_step) * discrete_step
+            tank.position = (x, y)
 
-        self.tank.moving = False
+        tank.moving = False

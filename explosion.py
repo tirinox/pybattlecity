@@ -17,8 +17,7 @@ class Explosion(GameObject):
     def __init__(self, x, y, short=False):
         super().__init__()
 
-        self.x = x
-        self.y = y
+        self.position = x, y
         n = self.N_STATES_SHORT if short else self.N_STATES
         self.animator = Animator(0.08, n, once=True)
         self.sprites = [ATLAS().image_at(x, y, sx, sy) for
@@ -34,6 +33,8 @@ class Explosion(GameObject):
             half_sprite_size = ATLAS().real_sprite_size // 2
             w_pix = w * half_sprite_size
             h_pix = h * half_sprite_size
-            x, y = self.x - w_pix, self.y - h_pix
+            x, y = self.position
+            x -= w_pix
+            y -= h_pix
             sprite = self.sprites[state]
             screen.blit(sprite, (x, y))

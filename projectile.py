@@ -11,8 +11,7 @@ class Projectile(GameObject):
     def __init__(self, x, y, d: Direction, power):
         super().__init__()
 
-        self.x = x
-        self.y = y
+        self.position = x, y
         self.direction = d
         self.power = power
 
@@ -25,14 +24,15 @@ class Projectile(GameObject):
 
     @property
     def on_screen(self):
-        return 0 < self.x < GAME_WIDTH and 0 < self.y < GAME_HEIGHT
+        x, y = self.position
+        return 0 < x < GAME_WIDTH and 0 < y < GAME_HEIGHT
 
     def render(self, screen):
-        screen.blit(self.sprite, (self.x + self.CENTRAL_SHIFT_X,
-                                  self.y + self.CENTRAL_SHIFT_Y))
+        x, y = self.position
+        screen.blit(self.sprite, (x + self.CENTRAL_SHIFT_X,
+                                  y + self.CENTRAL_SHIFT_Y))
         vx, vy = self.direction.vector
-        self.x += vx * self.SPEED
-        self.y += vy * self.SPEED
+        self.move(vx * self.SPEED, vy * self.SPEED)
 
         if DEBUG:
             ps = self.split_for_aim()
@@ -43,7 +43,7 @@ class Projectile(GameObject):
             self.remove_from_parent()
 
     def split_for_aim(self):
-        x, y = self.x, self.y
+        x, y = self.position
         distance = ATLAS().real_sprite_size // 2
         vx, vy = self.direction.vector
         px, py = (vy * distance), (-vx * distance)

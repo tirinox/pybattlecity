@@ -1,4 +1,4 @@
-from util import GameObject
+from util import GameObject, rect_intersection
 from pygame import Surface
 from enum import Enum
 from config import ATLAS
@@ -20,7 +20,10 @@ class Bonus(GameObject):
         super().__init__()
         self.type = bonus_type
         self.sprite = ATLAS().image_at(*bonus_type.value, 2, 2)
-        self.x, self.y = x, y
+        self.position = x, y
+        sz = ATLAS().real_sprite_size * 2
+        self.size = (sz, sz)
 
     def render(self, screen: Surface):
-        screen.blit(self.sprite, (self.x, self.y))
+        screen.blit(self.sprite, self.position)
+
