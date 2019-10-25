@@ -72,7 +72,7 @@ class Game:
         tank.position = p
         tank.direction = d
         tank.activate_shield()
-        self.scene.add_child(tank)
+        self.tanks.add_child(tank)
         self.tank = tank
 
     def make_explosion(self, x, y, short=False):
