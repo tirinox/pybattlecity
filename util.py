@@ -2,6 +2,7 @@ import time
 from collections import OrderedDict
 from enum import Enum
 from pygame import Surface
+import random
 
 
 COLOR_BLACK_KEY = (0, 0, 1, 255)
@@ -21,6 +22,10 @@ class Direction(Enum):
             self.LEFT: (-1, 0),
             self.RIGHT: (1, 0)
         }[self]
+
+    @classmethod
+    def random(cls):
+        return random.choice(list(cls))
 
 
 class Animator:
@@ -59,6 +64,11 @@ class Timer(Animator):
         if not self.done:
             self()
         return self.done
+
+
+class ArmedTimer(Timer):
+    def __init__(self, delay):
+        super().__init__(delay, paused=False)
 
 
 class GameObject:

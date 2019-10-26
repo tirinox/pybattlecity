@@ -5,9 +5,8 @@ from tank import Tank
 from util import *
 from explosion import Explosion
 from my_base import MyBase
-from math import floor, ceil
-from config import *
 from bonus import Bonus, BonusType
+from ai import AI
 import random
 
 
@@ -31,17 +30,11 @@ class Game:
         self.scene.add_child(self.tanks)
 
         tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
-        tank.position = self.field.get_center_of_cell(10, 25)
+        tank.place(self.field.get_center_of_cell(10, 25))
         tank.activate_shield()
         self.tanks.add_child(tank)
 
-        enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
-        enemy_tank.direction = Direction.DOWN
-        enemy_tank.position = self.field.get_center_of_cell(9, 1)
-        self.enemy_tank = enemy_tank
-        self.tanks.add_child(enemy_tank)
-
-        self.enemy_fire_timer = Timer(delay=1, paused=False)
+        self.make_enemy()
 
         # projectiles --
         self.projectiles = GameObject()
@@ -54,6 +47,14 @@ class Game:
         self.bonues = GameObject()
         self.scene.add_child(self.bonues)
         self.make_bonus()
+
+    def make_enemy(self):
+        enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
+        enemy_tank.direction = Direction.DOWN
+        enemy_tank.place(self.field.get_center_of_cell(9, 1))
+        self.enemy_tank = enemy_tank
+        self.tanks.add_child(enemy_tank)
+        self.enemy_ai = AI(self.enemy_tank, enemies=[self.tank], field=self.field)
 
     def make_bonus(self):
         col = self.r.randint(0, self.field.WIDTH - 1)
@@ -88,19 +89,6 @@ class Game:
         tank = self.tank if tank is None else tank
         tank.move_tank(direction)
 
-        push_back = self.field.intersect_rect(tank.bounding_rect)
-
-        if not push_back:
-            my_bb = tank.bounding_rect
-            for other_tank in self.tanks:  # type: Tank
-                if tank is not other_tank:
-                    if rect_intersection(my_bb, other_tank.bounding_rect):
-                        push_back = True
-                        break
-
-        if push_back:
-            tank.undo_move()
-
     def complete_moving(self):
         self.tank.stop_and_align_to_grid()
 
@@ -109,6 +97,26 @@ class Game:
             if b.intersects_rect(self.tank.bounding_rect):
                 b.remove_from_parent()
                 self.make_bonus()
+
+    def update_tanks(self):
+        self.enemy_ai.update()
+        if self.enemy_ai.want_to_fire:
+            self.enemy_ai.want_to_fire = False
+            self.fire(self.enemy_ai.tank)
+
+        for tank in self.tanks:
+            push_back = self.field.intersect_rect(tank.bounding_rect)
+
+            if not push_back:
+                my_bb = tank.bounding_rect
+                for other_tank in self.tanks:  # type: Tank
+                    if tank is not other_tank:
+                        if rect_intersection(my_bb, other_tank.bounding_rect):
+                            push_back = True
+                            break
+
+            if push_back:
+                tank.undo_move()
 
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
@@ -130,10 +138,7 @@ class Game:
                     continue
 
     def update(self):
-        if self.enemy_fire_timer.tick():
-            self.fire(self.enemy_tank)
-            self.enemy_fire_timer.start()
-
+        self.update_tanks()
         self.update_bonuses()
         self.update_projectiles()
 

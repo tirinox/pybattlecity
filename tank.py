@@ -45,6 +45,9 @@ class Tank(GameObject):
         else:
             self.speed = self.SPEED_NORMAL
 
+    def place(self, position):
+        self.position = self.old_position = tuple(position)
+
     def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1, fire_delay=0.5):
         super().__init__()
 
