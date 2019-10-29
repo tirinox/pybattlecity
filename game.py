@@ -51,7 +51,7 @@ class Game:
     def respawn_tank(self, t: Tank):
         my = t is self.tank
         pos = (10, 25) if my else (9, 1)
-        t.place(self.field.get_center_of_cell(*pos))
+        # t.place(self.field.get_center_of_cell(*pos))
 
     def make_enemy(self):
         enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
@@ -88,7 +88,7 @@ class Game:
     def fire(self, tank=None):
         tank = self.tank if tank is None else tank
         if tank.try_fire():
-            projectile = Projectile(*tank.gun_point, tank.direction, 1)
+            projectile = Projectile(*tank.gun_point, tank.direction, sender=tank)
             self.projectiles.add_child(projectile)
 
     def move_tank(self, direction: Direction, tank=None):
@@ -96,7 +96,7 @@ class Game:
         tank.move_tank(direction)
 
     def complete_moving(self):
-        self.tank.moving = False
+        self.tank.stop()
 
     def update_bonuses(self):
         for b in self.bonues:  # type: Bonus
@@ -134,8 +134,8 @@ class Game:
                 self.my_base.broken = True
                 was_hit = True
             else:
-                for t in self.tanks:  # type: Tank
-                    if t.check_hit(*p.position):
+                for t in self.tanks:  # type : Tank
+                    if p.sender is not t and t.check_hit(*p.position):
                         was_hit = True
                         self.respawn_tank(t)
                         break

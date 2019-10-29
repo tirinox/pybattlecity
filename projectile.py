@@ -8,9 +8,10 @@ class Projectile(GameObject):
     CENTRAL_SHIFT_Y = -15
     SPEED = 8
 
-    def __init__(self, x, y, d: Direction, power):
+    def __init__(self, x, y, d: Direction, power=1, sender=None):
         super().__init__()
 
+        self.sender = sender
         self.position = x, y
         self.direction = d
         self.power = power

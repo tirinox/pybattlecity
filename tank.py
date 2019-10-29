@@ -60,6 +60,9 @@ class Tank(GameObject):
 
         atlas = ATLAS()
 
+        sz = atlas.real_sprite_size * 2 - 2
+        self.size = sz, sz
+
         sprite_locations = {(d, s): self.get_sprite_location(color, tank_type, d, s)
                             for d in Direction
                             for s in self.POSSIBLE_MOVE_STATES}
@@ -153,7 +156,8 @@ class Tank(GameObject):
     @property
     def bounding_rect(self):
         sprite = self.sprites[self.sprite_key]
-        w, h = sprite.get_width(), sprite.get_height()
+        # w, h = sprite.get_width(), sprite.get_height()
+        w, h = self.size
         x, y = self.position
         return x - round(w / 2), y - round(h / 2), w, h
 
@@ -172,3 +176,6 @@ class Tank(GameObject):
 
     def undo_move(self):
         self.position = tuple(self.old_position)
+
+    def stop(self):
+        self.moving = False
