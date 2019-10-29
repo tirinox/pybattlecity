@@ -19,7 +19,8 @@ class SpriteSheet:
         return image
 
     @lru_cache(maxsize=None)
-    def image_at(self, x, y, w=1, h=1, colorkey=COLOR_BLACK_KEY, auto_crop=False):
+    def image_at(self, x, y, w=1, h=1, colorkey=COLOR_BLACK_KEY, auto_crop=False,
+                 square=True):
         # print(f'get sprite {x}, {y}, {w}, {h}, {colorkey}')
         s = self.sprite_size
         rect = pygame.Rect(x * s, y * s, w * s, h * s)
@@ -37,12 +38,12 @@ class SpriteSheet:
             image.set_colorkey(colorkey, pygame.RLEACCEL)
 
         if auto_crop:
-            image = self.crop(image, self.find_crop_rect(image))
+            image = self.crop(image, self.find_crop_rect(image, square=square))
 
         return image
 
     @staticmethod
-    def find_crop_rect(img, bg_color=COLOR_BLACK_KEY):
+    def find_crop_rect(img, bg_color=COLOR_BLACK_KEY, square=False):
         w, h = img.get_width(), img.get_height()
 
         def scan_line(or_x, or_y, horizontal):
@@ -74,9 +75,19 @@ class SpriteSheet:
             bottom += 1
 
         # print(f'left = {left}, top = {top}, right = {right}, bottom = {bottom}')
+        crop_w = w - right - left
+        crop_h = h - bottom - top
 
-        return left, top, w - right - left, h - bottom - top
+        if square:
+            d = crop_w - crop_h
+            if d > 0:
+                top -= d // 2
+                crop_h = crop_w
+            else:
+                left -= d // 2
+                crop_w = crop_h
 
+        return left, top, crop_w, crop_h
     @property
     def real_sprite_size(self):
         return self.sprite_size * self.upsample

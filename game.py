@@ -48,6 +48,11 @@ class Game:
         self.scene.add_child(self.bonues)
         self.make_bonus()
 
+    def respawn_tank(self, t: Tank):
+        my = t is self.tank
+        pos = (10, 25) if my else (9, 1)
+        t.place(self.field.get_center_of_cell(*pos))
+
     def make_enemy(self):
         enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
         enemy_tank.direction = Direction.DOWN
@@ -64,13 +69,14 @@ class Game:
 
     def switch_my_tank(self):
         tank = self.tank
-        tank.remove_from_parent()
         t, d, p = tank.tank_type, tank.direction, tank.position
+        tank.remove_from_parent()
+
         types = list(Tank.Type)
         current_index = types.index(t)
         next_type = types[(current_index + 1) % len(types)]
         tank = Tank(Tank.Color.PLAIN, next_type)
-        tank.position = p
+        tank.position = tank.old_position = p
         tank.direction = d
         tank.activate_shield()
         self.tanks.add_child(tank)
@@ -90,7 +96,7 @@ class Game:
         tank.move_tank(direction)
 
     def complete_moving(self):
-        self.tank.stop_and_align_to_grid()
+        self.tank.moving = False
 
     def update_bonuses(self):
         for b in self.bonues:  # type: Bonus
@@ -120,22 +126,23 @@ class Game:
 
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
+            was_hit = False
+            pos = p.position
             if self.field.check_hit(p):
-                p.remove_from_parent()
-                self.make_explosion(*p.position, short=True)
-                continue
-
-            if self.my_base.check_hit(p):
+                was_hit = True
+            elif self.my_base.check_hit(*pos):
                 self.my_base.broken = True
-                p.remove_from_parent()
-                self.make_explosion(*self.my_base.center_point)
-                continue
+                was_hit = True
+            else:
+                for t in self.tanks:  # type: Tank
+                    if t.check_hit(*p.position):
+                        was_hit = True
+                        self.respawn_tank(t)
+                        break
 
-            for t in self.tanks:  # type: Tank
-                if t.check_hit(p):
-                    self.make_explosion(*p.position)
-                    p.remove_from_parent()
-                    continue
+            if was_hit:
+                p.remove_from_parent()
+                self.make_explosion(*pos, short=True)
 
     def update(self):
         self.update_tanks()

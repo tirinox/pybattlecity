@@ -1,6 +1,5 @@
 from config import ATLAS
 from util import GameObject, point_in_rect
-from projectile import Projectile
 
 
 class MyBase(GameObject):
@@ -22,5 +21,5 @@ class MyBase(GameObject):
         w, h = self.size
         return x + w // 2, y + h // 2
 
-    def check_hit(self, p: Projectile):
-        return point_in_rect(*p.position, self.bounding_rect)
+    def check_hit(self, x, y):
+        return point_in_rect(x, y, self.bounding_rect)

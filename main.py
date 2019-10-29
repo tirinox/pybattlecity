@@ -34,9 +34,7 @@ if __name__ == '__main__':
             game.move_tank(Direction.LEFT)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             game.move_tank(Direction.RIGHT)
-        else:
-            game.complete_moving()
-
+        
         screen.fill((128, 128, 128))
 
         game.update()

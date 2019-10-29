@@ -10,7 +10,7 @@ class AI:
         self.field = field
         self.enemies = enemies
 
-        self.fire_timer = ArmedTimer(delay=1)
+        self.fire_timer = ArmedTimer(delay=0.5)
         self.dir_timer = ArmedTimer(delay=2)
 
         self.want_to_fire = False
@@ -25,6 +25,7 @@ class AI:
 
         if self.dir_timer.tick():
             self.tank.direction = Direction.random()
+            self.dir_timer.delay = random.uniform(0.3, 3.0)
             self.dir_timer.start()
 
         self.tank.move_tank(self.tank.direction)

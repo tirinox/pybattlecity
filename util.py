@@ -125,6 +125,10 @@ def trim_rect(rect, amount):
     return x + amount, y + amount, w - amount * 2, h - amount * 2
 
 
+def extend_rect(rect, amount):
+    return trim_rect(rect, -amount)
+
+
 def rect_intersection(a, b):
     ax, ay, aw, ah = a
     bx, by, bw, bh = b
