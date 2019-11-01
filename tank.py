@@ -55,8 +55,7 @@ class Tank(GameObject):
         self.moving = False
         self.move_animator = Animator(delay=0.1, max_states=2)
 
-        self.finish_position = (0, 0)
-        self.old_position = tuple(self.position)
+        self.remember_position()
 
         atlas = ATLAS()
 
@@ -155,8 +154,6 @@ class Tank(GameObject):
 
     @property
     def bounding_rect(self):
-        sprite = self.sprites[self.sprite_key]
-        # w, h = sprite.get_width(), sprite.get_height()
         w, h = self.size
         x, y = self.position
         return x - round(w / 2), y - round(h / 2), w, h
@@ -165,17 +162,32 @@ class Tank(GameObject):
         return point_in_rect(x, y, self.bounding_rect)
 
     def place(self, position):
-        self.position = self.old_position = tuple(position)
+        self.position = tuple(position)
+        self.remember_position()
 
     def move_tank(self, direction: Direction):
         self.moving = True
         self.direction = direction
-        self.old_position = tuple(self.position)
         vx, vy = direction.vector
         self.move(vx * self.speed, vy * self.speed)
+
+    def remember_position(self):
+        self.old_position = tuple(self.position)
 
     def undo_move(self):
         self.position = tuple(self.old_position)
 
     def stop(self):
         self.moving = False
+
+    def align(self):
+        discrete_step = ATLAS().real_sprite_size // 2
+        x, y = self.position
+        vx, vy = self.direction.vector
+        if vx != 0:
+            f = floor if vx < 0 else ceil
+            x = f(x / discrete_step) * discrete_step
+        if vy != 0:
+            f = floor if vy < 0 else ceil
+            y = f(y / discrete_step) * discrete_step
+        self.position = (x, y)

@@ -42,6 +42,7 @@ class Game:
 
         # else --
         self.font_debug = pygame.font.Font(None, 18)
+        self._stop_moving = False
 
         # bonuses --
         self.bonues = GameObject()
@@ -96,7 +97,7 @@ class Game:
         tank.move_tank(direction)
 
     def complete_moving(self):
-        self.tank.stop()
+        self._stop_moving = True
 
     def update_bonuses(self):
         for b in self.bonues:  # type: Bonus
@@ -105,6 +106,11 @@ class Game:
                 self.make_bonus()
 
     def update_tanks(self):
+        if self._stop_moving:
+            self._stop_moving = False
+            self.tank.stop()
+            self.tank.align()
+
         self.enemy_ai.update()
         if self.enemy_ai.want_to_fire:
             self.enemy_ai.want_to_fire = False
@@ -123,6 +129,8 @@ class Game:
 
             if push_back:
                 tank.undo_move()
+            else:
+                tank.remember_position()
 
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
