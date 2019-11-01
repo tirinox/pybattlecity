@@ -28,7 +28,15 @@ class Projectile(GameObject):
         x, y = self.position
         return 0 < x < GAME_WIDTH and 0 < y < GAME_HEIGHT
 
-    def render(self, screen):
+    @property
+    def bounding_rect(self):
+        x, y = self.position
+        w, h = self.CENTRAL_SHIFT_X, self.CENTRAL_SHIFT_Y
+        if self.direction in (Direction.UP, Direction.DOWN):
+            w, h = h, w
+        return x - w, y - h, w * 2, h * 2
+
+    def render(self, screen: pygame.Surface):
         x, y = self.position
         screen.blit(self.sprite, (x + self.CENTRAL_SHIFT_X,
                                   y + self.CENTRAL_SHIFT_Y))
@@ -36,21 +44,20 @@ class Projectile(GameObject):
         self.move(vx * self.SPEED, vy * self.SPEED)
 
         if DEBUG:
-            ps = self.split_for_aim()
-            for p in ps:
-                pygame.draw.circle(screen, (255, 0, 255), p, 2)
+            pygame.draw.rect(screen, (255, 0, 0), self.bounding_rect)
 
         if not self.on_screen:
             self.remove_from_parent()
 
     def split_for_aim(self):
         x, y = self.position
-        distance = ATLAS().real_sprite_size // 2
+        distance = ATLAS().real_sprite_size
         vx, vy = self.direction.vector
         px, py = (vy * distance), (-vx * distance)
 
         return (
-            # (x - vx * distance, y - vy * distance),
+            (x, y),
             (x + px, y + py),
             (x - px, y - py)
         )
+

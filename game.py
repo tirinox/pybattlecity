@@ -127,22 +127,22 @@ class Game:
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
             was_hit = False
-            pos = p.position
+            x, y = p.position
             if self.field.check_hit(p):
                 was_hit = True
-            elif self.my_base.check_hit(*pos):
+            elif self.my_base.check_hit(x, y):
                 self.my_base.broken = True
                 was_hit = True
             else:
                 for t in self.tanks:  # type : Tank
-                    if p.sender is not t and t.check_hit(*p.position):
+                    if p.sender is not t and t.check_hit(x, y):
                         was_hit = True
                         self.respawn_tank(t)
                         break
 
             if was_hit:
                 p.remove_from_parent()
-                self.make_explosion(*pos, short=True)
+                self.make_explosion(x, y, short=True)
 
     def update(self):
         self.update_tanks()

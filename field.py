@@ -212,25 +212,36 @@ class Field(GameObject):
         xs, ys = self.origin
         return xs + col * self._step, ys + row * self._step
 
-    def _check_hit(self, x, y, d: Direction):
+    def _check_hit(self, x, y):
         cell = self.cell_by_coords(x, y)
         if cell.solid:
-            if cell == cell.BRICK:
-                self.set_cell_by_coord(x, y, {
-                    Direction.LEFT: cell.BRICK_LEFT,
-                    Direction.RIGHT: cell.BRICK_RIGHT,
-                    Direction.UP: cell.BRICK_TOP,
-                    Direction.DOWN: cell.BRICK_BOTTOM
-                }[d])
-            elif cell.is_half_brick:
-                self.set_cell_by_coord(x, y, cell.FREE)
+
             return True
         return False
 
     def check_hit(self, p: Projectile):
-        p_group = p.split_for_aim()
-        # can't put it just into "any" because "any" is curcuit-cut operation,
-        # though we need for all "_check_hit" to be run!
-        p_results = [self._check_hit(x, y, p.direction) for x, y in p_group]
-        return any(p_results)
+        candidates = set()
+        for x, y in p.split_for_aim():
+            cell = self.cell_by_coords(x, y)
+            if cell.solid:
+                col, row = self.col_row_from_coords(x, y)
+                if self.inside_field_col_row(col, row):
+                    candidates.add((col, row))
+                else:
+                    return True
+
+        for col, row in candidates:
+            cell = self._cells[col][row]
+            if cell == cell.BRICK:
+                new_cell = {
+                    Direction.LEFT: cell.BRICK_LEFT,
+                    Direction.RIGHT: cell.BRICK_RIGHT,
+                    Direction.UP: cell.BRICK_TOP,
+                    Direction.DOWN: cell.BRICK_BOTTOM
+                }[p.direction]
+                self._cells[col][row] = new_cell
+            elif cell.is_half_brick:
+                self._cells[col][row] = cell.FREE
+
+        return bool(candidates)
 
