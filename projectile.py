@@ -45,13 +45,15 @@ class Projectile(GameObject):
 
         if DEBUG:
             pygame.draw.rect(screen, (255, 0, 0), self.bounding_rect)
+            for x, y in self.split_for_aim():
+                pygame.draw.circle(screen, (0, 100, 0), (x, y), 5)
 
         if not self.on_screen:
             self.remove_from_parent()
 
     def split_for_aim(self):
         x, y = self.position
-        distance = ATLAS().real_sprite_size
+        distance = int(ATLAS().real_sprite_size / 1.4)
         vx, vy = self.direction.vector
         px, py = (vy * distance), (-vx * distance)
 
@@ -60,4 +62,3 @@ class Projectile(GameObject):
             (x + px, y + py),
             (x - px, y - py)
         )
-

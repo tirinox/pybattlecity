@@ -1,6 +1,7 @@
 from spritesheet import SpriteSheet
+import sys
 
-DEBUG = False
+DEBUG = '--debug' in sys.argv
 
 GAME_WIDTH = 540
 GAME_HEIGHT = 480
