@@ -22,7 +22,7 @@ class Game:
         self.scene.add_child(self.field)
 
         self.my_base = MyBase()
-        self.my_base.position = self.field.coord_by_col_and_row(12, 24)
+        self.my_base.position = self.field.map.coord_by_col_and_row(12, 24)
         self.scene.add_child(self.my_base)
 
         # tanks --
@@ -63,8 +63,8 @@ class Game:
         self.enemy_ai = AI(self.enemy_tank, enemies=[self.tank], field=self.field)
 
     def make_bonus(self):
-        col = self.r.randint(0, self.field.WIDTH - 1)
-        row = self.r.randint(0, self.field.HEIGHT - 1)
+        col = self.r.randint(0, self.field.width - 1)
+        row = self.r.randint(0, self.field.height - 1)
         bonus = Bonus(BonusType.UPGRADE, *self.field.get_center_of_cell(col, row))
         self.bonues.add_child(bonus)
 
@@ -94,6 +94,7 @@ class Game:
 
     def move_tank(self, direction: Direction, tank=None):
         tank = self.tank if tank is None else tank
+        tank.remember_position()
         tank.move_tank(direction)
 
     def complete_moving(self):
@@ -106,6 +107,10 @@ class Game:
                 self.make_bonus()
 
     def update_tanks(self):
+        for i, tank in enumerate(self.tanks, start=1):
+            self.field.oc_map.fill_rect(tank.bounding_rect, i)
+
+
         if self._stop_moving:
             self._stop_moving = False
             self.tank.stop()
@@ -116,21 +121,15 @@ class Game:
             self.enemy_ai.want_to_fire = False
             self.fire(self.enemy_ai.tank)
 
-        for tank in self.tanks:
-            push_back = self.field.intersect_rect(tank.bounding_rect)
-
-            if not push_back:
-                my_bb = tank.bounding_rect
-                for other_tank in self.tanks:  # type: Tank
-                    if tank is not other_tank:
-                        if rect_intersection(my_bb, other_tank.bounding_rect):
-                            push_back = True
-                            break
+        for i, tank in enumerate(self.tanks, start=1):
+            bb = tank.bounding_rect
+            if not self.field.oc_map.test_rect(bb, good_values=(0, i)):
+                push_back = True
+            else:
+                push_back = self.field.intersect_rect(bb)
 
             if push_back:
                 tank.undo_move()
-            else:
-                tank.remember_position()
 
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
@@ -153,9 +152,12 @@ class Game:
                 self.make_explosion(x, y, short=True)
 
     def update(self):
+        self.field.oc_map.clear()
+
         self.update_tanks()
         self.update_bonuses()
         self.update_projectiles()
+
 
     # ---- render ----
 

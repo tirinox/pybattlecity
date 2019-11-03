@@ -28,4 +28,5 @@ class AI:
             self.dir_timer.delay = random.uniform(0.3, 3.0)
             self.dir_timer.start()
 
+        self.tank.remember_position()
         self.tank.move_tank(self.tank.direction)

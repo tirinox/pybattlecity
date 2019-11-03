@@ -1,175 +1,242 @@
 from util import GameObject, Direction, rect_intersection
-from config import ATLAS
+from config import *
 from enum import Enum, auto
 import pygame
 from math import floor
 from projectile import Projectile
 
 
+class DiscreteMap:
+    def __init__(self, position, cell_size, cells_width=FIELD_WIDTH, cells_height=FIELD_HEIGHT, default_value=None):
+        self.width = cells_width
+        self.height = cells_height
+        self.position = position
+        self.default_value = default_value
+        self.step = cell_size
+        self._cells = []
+        self.clear()
+
+    def clear(self):
+        dv = self.default_value
+        self._cells = [[dv] * self.height for _ in range(self.width)]
+
+    def coord_by_col_and_row(self, col, row):
+        xs, ys = self.position
+        x = xs + col * self.step
+        y = ys + row * self.step
+        return x, y
+
+    def col_row_from_coords(self, x, y):
+        xs, ys = self.position
+        col = floor((x - xs) / self.step)
+        row = floor((y - ys) / self.step)
+        return col, row
+
+    def inside_col_row(self, col, row):
+        return 0 <= col < self.width and 0 <= row < self.height
+
+    # addressing: self.cells[x or column][y or row]
+    def get_cell_by_col_row(self, col, row):
+        if self.inside_col_row(col, row):
+            return self._cells[col][row]
+        else:
+            return None
+
+    def get_cell_by_coords(self, x, y):
+        return self.get_cell_by_col_row(*self.col_row_from_coords(x, y))
+
+    def set_cell_col_row(self, col, row, cell):
+        if self.inside_col_row(col, row):
+            self._cells[col][row] = cell
+
+    def set_cell_by_coord(self, x, y, cell):
+        self.set_cell_col_row(*self.col_row_from_coords(x, y), cell)
+
+
+class OccupancyMap(DiscreteMap):
+    def __init__(self, position, cell_size, cells_width=FIELD_WIDTH, cells_height=FIELD_HEIGHT):
+        super().__init__(position, cell_size, cells_width, cells_height, default_value=0)
+
+    def find_col_row_of_rect(self, r):
+        x, y, w, h = r
+        assert w >= 0 and h >= 0
+
+        c1, r1 = self.col_row_from_coords(x, y)
+        c2, r2 = self.col_row_from_coords(x + w, y + h)
+        min_c = min(c1, c2, self.width - 1)
+        max_c = max(c1, c2, 0)
+        min_r = min(r1, r2, self.height - 1)
+        max_r = max(r1, r2, 0)
+
+        for col in range(min_c, max_c + 1):
+            for row in range(min_r, max_r + 1):
+                yield col, row
+
+    def fill_rect(self, rect, v=1):
+        for col, row in self.find_col_row_of_rect(rect):
+            self.set_cell_col_row(col, row, v)
+
+    def test_rect(self, rect, good_values=(0, 1)):
+        return all(self.get_cell_by_col_row(c, r) in good_values for c, r in self.find_col_row_of_rect(rect))
+
+
+class CellType(Enum):
+    FREE = auto()
+    BRICK = auto()
+    BRICK_RIGHT = auto()
+    BRICK_BOTTOM = auto()
+    BRICK_LEFT = auto()
+    BRICK_TOP = auto()
+    CONCRETE = auto()
+    GREEN = auto()
+    SKATE = auto()
+
+    @property
+    def sprite_location(self):
+        return {
+            self.FREE: (32, 13),
+            self.BRICK: (32, 0),
+            self.BRICK_RIGHT: (33, 8),
+            self.BRICK_BOTTOM: (34, 8),
+            self.BRICK_LEFT: (35, 8),
+            self.BRICK_TOP: (36, 8),
+            self.CONCRETE: (32, 2),
+            self.GREEN: (34, 4),
+            self.SKATE: (36, 4)
+        }[self]
+
+    @property
+    def is_draw_over(self):
+        return self == self.GREEN
+
+    @property
+    def can_tank_run_here(self):
+        return self in (
+            self.FREE,
+            self.SKATE,
+            self.GREEN
+        )
+
+    @property
+    def solid(self):
+        return self in (
+            self.BRICK,
+            self.BRICK_TOP,
+            self.BRICK_LEFT,
+            self.BRICK_BOTTOM,
+            self.BRICK_RIGHT,
+            self.CONCRETE
+        )
+
+    @property
+    def brick(self):
+        return self in (
+            self.BRICK,
+            self.BRICK_TOP,
+            self.BRICK_BOTTOM,
+            self.BRICK_LEFT,
+            self.BRICK_RIGHT
+        )
+
+    @property
+    def is_half_brick(self):
+        return self.brick and self != self.BRICK
+
+    @classmethod
+    def from_symbol(cls, s):
+        return {
+            '_': cls.FREE,
+            'B': cls.BRICK,
+            'C': cls.CONCRETE,
+            'S': cls.SKATE,
+            'G': cls.GREEN,
+            'l': cls.BRICK_LEFT,
+            't': cls.BRICK_TOP,
+            'b': cls.BRICK_BOTTOM,
+            'r': cls.BRICK_RIGHT
+        }[s]
+
+    def calculate_rect(self, x, y, step):
+        half = step // 2
+        if self == self.BRICK_RIGHT:
+            return x + half, y, half, step
+        elif self == self.BRICK_LEFT:
+            return x, y, half, step
+        elif self == self.BRICK_BOTTOM:
+            return x, y + half, step, half
+        elif self == self.BRICK_TOP:
+            return x, y, step, half
+        else:
+            return x, y, step, step
+
+
 class Field(GameObject):
-    class CellType(Enum):
-        FREE = auto()
-        BRICK = auto()
-        BRICK_RIGHT = auto()
-        BRICK_BOTTOM = auto()
-        BRICK_LEFT = auto()
-        BRICK_TOP = auto()
-        CONCRETE = auto()
-        GREEN = auto()
-        SKATE = auto()
-
-        @property
-        def sprite_location(self):
-            return {
-                self.FREE: (32, 13),
-                self.BRICK: (32, 0),
-                self.BRICK_RIGHT: (33, 8),
-                self.BRICK_BOTTOM: (34, 8),
-                self.BRICK_LEFT: (35, 8),
-                self.BRICK_TOP: (36, 8),
-                self.CONCRETE: (32, 2),
-                self.GREEN: (34, 4),
-                self.SKATE: (36, 4)
-            }[self]
-
-        @property
-        def is_draw_over(self):
-            return self == self.GREEN
-
-        @property
-        def can_tank_run_here(self):
-            return self in (
-                self.FREE,
-                self.SKATE,
-                self.GREEN
-            )
-
-        @property
-        def solid(self):
-            return self in (
-                self.BRICK,
-                self.BRICK_TOP,
-                self.BRICK_LEFT,
-                self.BRICK_BOTTOM,
-                self.BRICK_RIGHT,
-                self.CONCRETE
-            )
-
-        @property
-        def brick(self):
-            return self in (
-                self.BRICK,
-                self.BRICK_TOP,
-                self.BRICK_BOTTOM,
-                self.BRICK_LEFT,
-                self.BRICK_RIGHT
-            )
-
-        @property
-        def is_half_brick(self):
-            return self.brick and self != self.BRICK
-
-        @classmethod
-        def from_symbol(cls, s):
-            return {
-                '_': cls.FREE,
-                'B': cls.BRICK,
-                'C': cls.CONCRETE,
-                'S': cls.SKATE,
-                'G': cls.GREEN,
-                'l': cls.BRICK_LEFT,
-                't': cls.BRICK_TOP,
-                'b': cls.BRICK_BOTTOM,
-                'r': cls.BRICK_RIGHT
-            }[s]
-
-        def calculate_rect(self, x, y, step):
-            half = step // 2
-            if self == self.BRICK_RIGHT:
-                return x + half, y, half, step
-            elif self == self.BRICK_LEFT:
-                return x, y, half, step
-            elif self == self.BRICK_BOTTOM:
-                return x, y + half, step, half
-            elif self == self.BRICK_TOP:
-                return x, y, step, half
-            else:
-                return x, y, step, step
-
-    HEIGHT = WIDTH = 13 * 2  # 13 full blocks by (2x2) cells each
     BACKGROUND_COLOR = (0, 0, 0)
 
-    def __init__(self):
+    @GameObject.position.setter
+    def position(self, p):
+        GameObject.position.fset(self, p)
+        self.map.position = p
+        self.oc_map.position = p
+
+    def __init__(self, cells_width=FIELD_WIDTH, cells_height=FIELD_HEIGHT):
         super().__init__()
 
-        self.origin = (40, 40)
+        self.width = cells_width
+        self.height = cells_height
+
         self._step = ATLAS().real_sprite_size
 
-        # addressing: self.cells[x or column][y or row]
-        self._cells = [
-            [Field.CellType.FREE for _ in range(self.HEIGHT)]
-            for _ in range(self.WIDTH)
-        ]
+        self.map = DiscreteMap(self.position, self._step, cells_width, cells_height)
+        self.oc_map = OccupancyMap(self.position, self._step, cells_width, cells_height)
+
+        self.position = (40, 40)
 
         self._sprites = {
-            t: ATLAS().image_at(*t.sprite_location, 1, 1, colorkey=None) for t in Field.CellType
+            t: ATLAS().image_at(*t.sprite_location, 1, 1, colorkey=None) for t in CellType
         }
 
     def load_from_file(self, filename):
         with open(filename, 'r') as f:
             lines = f.readlines()
-        assert len(lines) >= self.HEIGHT, "incomplete level"
-        for _, (y, line) in zip(range(self.HEIGHT), enumerate(lines)):
-            assert len(line) >= self.WIDTH, "incomplete line"
-            for _, (x, symbol) in zip(range(self.WIDTH), enumerate(line)):
-                self._cells[x][y] = self.CellType.from_symbol(symbol)
-                print(symbol, end='')
-            print()
-
-    def coord_by_col_and_row(self, col, row):
-        xs, ys = self.origin
-        x = xs + col * self._step
-        y = ys + row * self._step
-        return x, y
-
-    def col_row_from_coords(self, x, y):
-        xs, ys = self.origin
-        col = floor((x - xs) / self._step)
-        row = floor((y - ys) / self._step)
-        return col, row
-
-    def inside_field_col_row(self, col, row):
-        return 0 <= col < self.WIDTH and 0 <= row < self.HEIGHT
-
-    def cell_by_coords(self, x, y):
-        col, row = self.col_row_from_coords(x, y)
-        if self.inside_field_col_row(col, row):
-            return self._cells[col][row]
-        else:
-            return self.CellType.CONCRETE
-
-    def set_cell_by_coord(self, x, y, cell: CellType):
-        col, row = self.col_row_from_coords(x, y)
-        if self.inside_field_col_row(col, row):
-            self._cells[col][row] = cell
+        assert len(lines) >= self.height, "incomplete level"
+        for _, (y, line) in zip(range(self.height), enumerate(lines)):
+            assert len(line) >= self.width, "incomplete line"
+            for _, (x, symbol) in zip(range(self.width), enumerate(line)):
+                self.map.set_cell_col_row(x, y, CellType.from_symbol(symbol))
+                if DEBUG:
+                    print(symbol, end='')
+            if DEBUG:
+                print()
 
     @property
     def rect(self):
-        return [*self.origin, self._step * self.WIDTH, self._step * self.HEIGHT]
-
-    def point_in_field(self, x, y):
-        fx, fy, fw, fh = self.rect
-        return fx <= x <= fx + fw and fy <= y <= fy + fh
+        return [*self.position, self._step * self.width, self._step * self.height]
 
     def render(self, screen):
         pygame.draw.rect(screen, self.BACKGROUND_COLOR, self.rect)
 
-        for col in range(self.WIDTH):
-            for row in range(self.HEIGHT):
-                cell = self._cells[col][row]
+        for col in range(self.width):
+            for row in range(self.height):
+                cell = self.map.get_cell_by_col_row(col, row)
                 if cell != cell.FREE:
-                    coords = self.coord_by_col_and_row(col, row)
+                    coords = self.map.coord_by_col_and_row(col, row)
                     screen.blit(self._sprites[cell], coords)
+
+        # debug
+        colors = [
+            (255, 0, 0),
+            (0, 255, 0),
+            (0, 0, 255),
+        ]
+        step = self._step
+        for col in range(self.width):
+            for row in range(self.height):
+                occupied = self.oc_map.get_cell_by_col_row(col, row)
+                if occupied != 0:
+                    x, y = self.oc_map.coord_by_col_and_row(col, row)
+                    color = colors[occupied % len(colors)]
+                    pygame.draw.rect(screen, color, (x, y, step, step))
 
     def intersect_rect(self, test_rect):
         x1, y1, w, h = test_rect
@@ -184,10 +251,10 @@ class Field(GameObject):
         )
 
         rmax = cmax = -1
-        rmin, cmin = self.HEIGHT, self.WIDTH
+        rmin, cmin = self.height, self.width
 
         for x, y in check_pts:
-            col, row = self.col_row_from_coords(x, y)
+            col, row = self.map.col_row_from_coords(x, y)
             rmax = max(rmax, row)
             rmin = min(rmin, row)
             cmax = max(cmax, col)
@@ -195,13 +262,13 @@ class Field(GameObject):
 
         for c in range(cmin, cmax + 1):
             for r in range(rmin, rmax + 1):
-                if not self.inside_field_col_row(c, r):
+                if not self.map.inside_col_row(c, r):
                     return True
 
-                cell = self._cells[c][r]
+                cell = self.map.get_cell_by_col_row(c, r)
 
                 if not cell.can_tank_run_here:
-                    x, y = self.coord_by_col_and_row(c, r)
+                    x, y = self.map.coord_by_col_and_row(c, r)
                     abs_cell_rect = cell.calculate_rect(x, y, self._step)
                     if rect_intersection(test_rect, abs_cell_rect):
                         return True
@@ -209,29 +276,21 @@ class Field(GameObject):
         return False
 
     def get_center_of_cell(self, col, row):
-        xs, ys = self.origin
+        xs, ys = self.position
         return xs + col * self._step, ys + row * self._step
-
-    def _check_hit(self, x, y):
-        cell = self.cell_by_coords(x, y)
-        if cell.solid:
-
-            return True
-        return False
 
     def check_hit(self, p: Projectile):
         candidates = set()
         for x, y in p.split_for_aim():
-            cell = self.cell_by_coords(x, y)
-            if cell.solid:
-                col, row = self.col_row_from_coords(x, y)
-                if self.inside_field_col_row(col, row):
-                    candidates.add((col, row))
-                else:
-                    return True
+            cell = self.map.get_cell_by_coords(x, y)
+            if cell is None:
+                return True
+            elif cell.solid:
+                col, row = self.map.col_row_from_coords(x, y)
+                candidates.add((col, row))
 
         for col, row in candidates:
-            cell = self._cells[col][row]
+            cell = self.map.get_cell_by_col_row(col, row)  # type: CellType
             if cell == cell.BRICK:
                 new_cell = {
                     Direction.LEFT: cell.BRICK_LEFT,
@@ -239,9 +298,10 @@ class Field(GameObject):
                     Direction.UP: cell.BRICK_TOP,
                     Direction.DOWN: cell.BRICK_BOTTOM
                 }[p.direction]
-                self._cells[col][row] = new_cell
             elif cell.is_half_brick:
-                self._cells[col][row] = cell.FREE
+                new_cell = cell.FREE
+            else:
+                continue
+            self.map.set_cell_col_row(col, row, new_cell)
 
         return bool(candidates)
-

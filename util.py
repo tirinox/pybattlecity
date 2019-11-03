@@ -75,8 +75,16 @@ class GameObject:
     def __init__(self):
         self._parent = None
         self._children = OrderedDict()
-        self.position = (0, 0)
+        self._position = (0, 0)
         self.size = (0, 0)
+
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, p):
+        self._position = p
 
     def move(self, dx, dy):
         x, y = self.position
@@ -137,6 +145,19 @@ def rect_intersection(a, b):
            ay < by + bh and ay + ah > by
 
 
+def rect_intersection_eq(a, b):
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+
+    return ax <= bx + bw and ax + aw >= bx and \
+           ay <= by + bh and ay + ah >= by
+
+
 def point_in_rect(px, py, rect):
     x, y, w, h = rect
     return x < px < x + w and y < py < y + h
+
+
+def point_in_rect_eq(px, py, rect):
+    x, y, w, h = rect
+    return x <= px <= x + w and y <= py <= y + h

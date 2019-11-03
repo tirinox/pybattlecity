@@ -6,6 +6,8 @@ DEBUG = '--debug' in sys.argv
 GAME_WIDTH = 540
 GAME_HEIGHT = 480
 
+FIELD_HEIGHT = FIELD_WIDTH = 13 * 2  # 13 full blocks by (2x2) cells each
+
 ATLAS_FILE = 'data/atlas.png'
 
 _altas = None
@@ -17,4 +19,3 @@ def get_atlas() -> SpriteSheet:
     return _altas
 
 ATLAS = get_atlas
-

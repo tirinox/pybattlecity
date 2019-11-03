@@ -26,4 +26,3 @@ class Bonus(GameObject):
 
     def render(self, screen: Surface):
         screen.blit(self.sprite, self.position)
-

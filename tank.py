@@ -69,6 +69,11 @@ class Tank(GameObject):
         self.sprites = {key: atlas.image_at(*location, auto_crop=True, square=False)
                         for key, location in sprite_locations.items()}
 
+        if DEBUG:
+            for k, v in self.sprites.items():
+                w, h = v.get_width(), v.get_height()
+                print(k, w, h)
+
         self.shield_timer = Timer(5)
         self.shield_animator = Animator(delay=0.04, max_states=2)
         self.shield_sprites = (
