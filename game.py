@@ -33,6 +33,7 @@ class Game:
         tank.place(self.field.get_center_of_cell(10, 25))
         tank.activate_shield()
         self.tanks.add_child(tank)
+        self.my_tank_move_to_direction = None
 
         self.make_enemy()
 
@@ -42,7 +43,6 @@ class Game:
 
         # else --
         self.font_debug = pygame.font.Font(None, 18)
-        self._stop_moving = False
 
         # bonuses --
         self.bonues = GameObject()
@@ -97,9 +97,6 @@ class Game:
         tank.remember_position()
         tank.move_tank(direction)
 
-    def complete_moving(self):
-        self._stop_moving = True
-
     def update_bonuses(self):
         for b in self.bonues:  # type: Bonus
             if b.intersects_rect(self.tank.bounding_rect):
@@ -108,13 +105,13 @@ class Game:
 
     def update_tanks(self):
         for i, tank in enumerate(self.tanks, start=1):
-            self.field.oc_map.fill_rect(tank.bounding_rect, i)
+            self.field.oc_map.fill_rect(tank.bounding_rect, i, only_if_empty=True)
 
-
-        if self._stop_moving:
-            self._stop_moving = False
+        if self.my_tank_move_to_direction is None:
             self.tank.stop()
             self.tank.align()
+        else:
+            self.move_tank(self.my_tank_move_to_direction, self.tank)
 
         self.enemy_ai.update()
         if self.enemy_ai.want_to_fire:
@@ -123,7 +120,7 @@ class Game:
 
         for i, tank in enumerate(self.tanks, start=1):
             bb = tank.bounding_rect
-            if not self.field.oc_map.test_rect(bb, good_values=(0, i)):
+            if not self.field.oc_map.test_rect(bb, good_values=(0, i)):  # 0 = empty, i = me
                 push_back = True
             else:
                 push_back = self.field.intersect_rect(bb)
@@ -153,11 +150,11 @@ class Game:
 
     def update(self):
         self.field.oc_map.clear()
+        self.field.oc_map.fill_rect(self.my_base.bounding_rect, v=999)
 
         self.update_tanks()
         self.update_bonuses()
         self.update_projectiles()
-
 
     # ---- render ----
 

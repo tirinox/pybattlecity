@@ -8,7 +8,7 @@ class MyBase(GameObject):
         self._normal_img = ATLAS().image_at(38, 4, 2, 2)
         self._broken_img = ATLAS().image_at(40, 4, 2, 2)
         self.broken = False
-        size = ATLAS().real_sprite_size * 2
+        size = ATLAS().real_sprite_size * 2 - 1
         self.size = (size, size)
 
     def render(self, screen):

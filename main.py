@@ -27,15 +27,15 @@ if __name__ == '__main__':
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            game.move_tank(Direction.UP)
+            game.my_tank_move_to_direction = Direction.UP
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            game.move_tank(Direction.DOWN)
+            game.my_tank_move_to_direction = Direction.DOWN
         elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            game.move_tank(Direction.LEFT)
+            game.my_tank_move_to_direction = Direction.LEFT
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            game.move_tank(Direction.RIGHT)
+            game.my_tank_move_to_direction = Direction.RIGHT
         else:
-            game.complete_moving()
+            game.my_tank_move_to_direction = None
         
         screen.fill((128, 128, 128))
 

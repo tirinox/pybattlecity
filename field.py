@@ -72,9 +72,10 @@ class OccupancyMap(DiscreteMap):
             for row in range(min_r, max_r + 1):
                 yield col, row
 
-    def fill_rect(self, rect, v=1):
+    def fill_rect(self, rect, v=1, only_if_empty=False):
         for col, row in self.find_col_row_of_rect(rect):
-            self.set_cell_col_row(col, row, v)
+            if not only_if_empty or self.get_cell_by_col_row(col, row) == 0:
+                self.set_cell_col_row(col, row, v)
 
     def test_rect(self, rect, good_values=(0, 1)):
         return all(self.get_cell_by_col_row(c, r) in good_values for c, r in self.find_col_row_of_rect(rect))
