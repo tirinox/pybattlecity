@@ -31,7 +31,7 @@ class Projectile(GameObject):
     @property
     def bounding_rect(self):
         x, y = self.position
-        w, h = self.CENTRAL_SHIFT_X, self.CENTRAL_SHIFT_Y
+        w, h = abs(self.CENTRAL_SHIFT_X), abs(self.CENTRAL_SHIFT_Y)
         if self.direction in (Direction.UP, Direction.DOWN):
             w, h = h, w
         return x - w, y - h, w * 2, h * 2
@@ -40,8 +40,6 @@ class Projectile(GameObject):
         x, y = self.position
         screen.blit(self.sprite, (x + self.CENTRAL_SHIFT_X,
                                   y + self.CENTRAL_SHIFT_Y))
-        vx, vy = self.direction.vector
-        self.move(vx * self.SPEED, vy * self.SPEED)
 
         if DEBUG:
             pygame.draw.rect(screen, (255, 0, 0), self.bounding_rect)
@@ -50,6 +48,10 @@ class Projectile(GameObject):
 
         if not self.on_screen:
             self.remove_from_parent()
+
+    def update(self):
+        vx, vy = self.direction.vector
+        self.move(vx * self.SPEED, vy * self.SPEED)
 
     def split_for_aim(self):
         x, y = self.position
@@ -62,3 +64,7 @@ class Projectile(GameObject):
             (x + px, y + py),
             (x - px, y - py)
         )
+
+    def __hash__(self):
+        return id(self)
+

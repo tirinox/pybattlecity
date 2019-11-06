@@ -1,6 +1,7 @@
 from spritesheet import SpriteSheet
 import sys
 
+FIELD_DEBUG = '--field-debug' in sys.argv
 DEBUG = '--debug' in sys.argv
 
 GAME_WIDTH = 540

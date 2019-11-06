@@ -1,4 +1,4 @@
-from util import GameObject, Direction, rect_intersection
+from util import GameObject, Direction, rect_intersection, DEMO_COLORS
 from config import *
 from enum import Enum, auto
 import pygame
@@ -52,11 +52,18 @@ class DiscreteMap:
     def set_cell_by_coord(self, x, y, cell):
         self.set_cell_col_row(*self.col_row_from_coords(x, y), cell)
 
+    def render(self, screen):
+        step = self.step
+        for col in range(self.width):
+            for row in range(self.height):
+                occupied = self.get_cell_by_col_row(col, row)
+                if occupied is not None:
+                    x, y = self.coord_by_col_and_row(col, row)
+                    color = DEMO_COLORS[id(occupied) % len(DEMO_COLORS)]
+                    pygame.draw.rect(screen, color, (x, y, step, step))
+
 
 class OccupancyMap(DiscreteMap):
-    def __init__(self, position, cell_size, cells_width=FIELD_WIDTH, cells_height=FIELD_HEIGHT):
-        super().__init__(position, cell_size, cells_width, cells_height, default_value=0)
-
     def find_col_row_of_rect(self, r):
         x, y, w, h = r
         assert w >= 0 and h >= 0
@@ -74,7 +81,7 @@ class OccupancyMap(DiscreteMap):
 
     def fill_rect(self, rect, v=1, only_if_empty=False):
         for col, row in self.find_col_row_of_rect(rect):
-            if not only_if_empty or self.get_cell_by_col_row(col, row) == 0:
+            if not only_if_empty or self.get_cell_by_col_row(col, row) is None:
                 self.set_cell_col_row(col, row, v)
 
     def test_rect(self, rect, good_values=(0, 1)):
@@ -189,7 +196,7 @@ class Field(GameObject):
         self._step = ATLAS().real_sprite_size
 
         self.map = DiscreteMap(self.position, self._step, cells_width, cells_height)
-        self.oc_map = OccupancyMap(self.position, self._step, cells_width, cells_height)
+        self.oc_map = OccupancyMap(self.position, self._step // 2, cells_width * 2, cells_height * 2)
 
         self.position = (40, 40)
 
@@ -205,10 +212,11 @@ class Field(GameObject):
             assert len(line) >= self.width, "incomplete line"
             for _, (x, symbol) in zip(range(self.width), enumerate(line)):
                 self.map.set_cell_col_row(x, y, CellType.from_symbol(symbol))
-                if DEBUG:
+                if FIELD_DEBUG:
                     print(symbol, end='')
-            if DEBUG:
-                print()
+            if FIELD_DEBUG:
+                print()  # new line
+
 
     @property
     def rect(self):
@@ -224,20 +232,8 @@ class Field(GameObject):
                     coords = self.map.coord_by_col_and_row(col, row)
                     screen.blit(self._sprites[cell], coords)
 
-        # debug
-        colors = [
-            (255, 0, 0),
-            (0, 255, 0),
-            (0, 0, 255),
-        ]
-        step = self._step
-        for col in range(self.width):
-            for row in range(self.height):
-                occupied = self.oc_map.get_cell_by_col_row(col, row)
-                if occupied != 0:
-                    x, y = self.oc_map.coord_by_col_and_row(col, row)
-                    color = colors[occupied % len(colors)]
-                    pygame.draw.rect(screen, color, (x, y, step, step))
+        if FIELD_DEBUG:
+            self.oc_map.render(screen)
 
     def intersect_rect(self, test_rect):
         x1, y1, w, h = test_rect

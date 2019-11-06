@@ -10,8 +10,8 @@ class AI:
         self.field = field
         self.enemies = enemies
 
-        self.fire_timer = ArmedTimer(delay=0.5)
-        self.dir_timer = ArmedTimer(delay=2)
+        self.fire_timer = ArmedTimer(delay=1.0)
+        self.dir_timer = ArmedTimer(delay=2.0)
 
         self.want_to_fire = False
 

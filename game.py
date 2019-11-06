@@ -52,7 +52,7 @@ class Game:
     def respawn_tank(self, t: Tank):
         my = t is self.tank
         pos = (10, 25) if my else (9, 1)
-        # t.place(self.field.get_center_of_cell(*pos))
+        t.place(self.field.get_center_of_cell(*pos))
 
     def make_enemy(self):
         enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
@@ -104,8 +104,8 @@ class Game:
                 self.make_bonus()
 
     def update_tanks(self):
-        for i, tank in enumerate(self.tanks, start=1):
-            self.field.oc_map.fill_rect(tank.bounding_rect, i, only_if_empty=True)
+        for tank in self.tanks:
+            self.field.oc_map.fill_rect(tank.bounding_rect, tank, only_if_empty=True)
 
         if self.my_tank_move_to_direction is None:
             self.tank.stop()
@@ -118,9 +118,9 @@ class Game:
             self.enemy_ai.want_to_fire = False
             self.fire(self.enemy_ai.tank)
 
-        for i, tank in enumerate(self.tanks, start=1):
+        for tank in self.tanks:
             bb = tank.bounding_rect
-            if not self.field.oc_map.test_rect(bb, good_values=(0, i)):  # 0 = empty, i = me
+            if not self.field.oc_map.test_rect(bb, good_values=(None, tank)):
                 push_back = True
             else:
                 push_back = self.field.intersect_rect(bb)
@@ -130,27 +130,45 @@ class Game:
 
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
-            was_hit = False
+            r = extend_rect((*p.position, 0, 0), 2)
+            self.field.oc_map.fill_rect(r, p)
+
+        remove_projectiles_waitlist = set()
+
+        for p in self.projectiles:  # type: Projectile
+            p.update()
+
+            something = self.field.oc_map.get_cell_by_coords(*p.position)
+            if something and something is not p and isinstance(something, Projectile):
+                remove_projectiles_waitlist.add(p)
+                remove_projectiles_waitlist.add(something)
+                print('collision')
+
+            was_hit = None
             x, y = p.position
             if self.field.check_hit(p):
-                was_hit = True
+                was_hit = self.field
             elif self.my_base.check_hit(x, y):
                 self.my_base.broken = True
-                was_hit = True
+                was_hit = self.my_base
             else:
                 for t in self.tanks:  # type : Tank
                     if p.sender is not t and t.check_hit(x, y):
-                        was_hit = True
+                        was_hit = t
                         self.respawn_tank(t)
                         break
 
             if was_hit:
-                p.remove_from_parent()
-                self.make_explosion(x, y, short=True)
+                remove_projectiles_waitlist.add(p)
+                hit_tank = isinstance(was_hit, Tank)
+                self.make_explosion(x, y, short=(not hit_tank))
+
+        for p in remove_projectiles_waitlist:
+            p.remove_from_parent()
 
     def update(self):
         self.field.oc_map.clear()
-        self.field.oc_map.fill_rect(self.my_base.bounding_rect, v=999)
+        self.field.oc_map.fill_rect(self.my_base.bounding_rect, self.my_base)
 
         self.update_tanks()
         self.update_bonuses()

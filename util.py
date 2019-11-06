@@ -3,7 +3,10 @@ from collections import OrderedDict
 from enum import Enum
 from pygame import Surface
 import random
+import itertools
 
+
+DEMO_COLORS = list(itertools.product(*([(0, 128, 255)] * 3)))[1:]
 
 COLOR_BLACK_KEY = (0, 0, 1, 255)
 
@@ -102,6 +105,9 @@ class GameObject:
 
     def __iter__(self):
         return iter(OrderedDict(self._children))
+
+    def __getitem__(self, item):
+        return self._children[item]
 
     def add_child(self, child: 'GameObject'):
         child._parent = self

@@ -23,6 +23,8 @@ if __name__ == '__main__':
                     running = False
                 elif event.key == K_SPACE:
                     game.fire()
+                elif event.key == K_r:
+                    game = Game()
 
         keys = pygame.key.get_pressed()
 
@@ -44,8 +46,6 @@ if __name__ == '__main__':
 
         if DEBUG:
             pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
-            # pygame.draw.rect(screen, (255, 255, 0), game.tank.bounding_rect, 1)
-            # pygame.draw.circle(screen, (0, 0, 255), game.tank.center_point, 4, 1)
 
         pygame.display.flip()
 
