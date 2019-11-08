@@ -79,6 +79,7 @@ class Game:
         tank = Tank(Tank.Color.PLAIN, next_type)
         tank.position = tank.old_position = p
         tank.direction = d
+        tank.shielded = True
         tank.activate_shield()
         self.tanks.add_child(tank)
         self.tank = tank
@@ -142,7 +143,6 @@ class Game:
             if something and something is not p and isinstance(something, Projectile):
                 remove_projectiles_waitlist.add(p)
                 remove_projectiles_waitlist.add(something)
-                print('collision')
 
             was_hit = None
             x, y = p.position
@@ -155,13 +155,15 @@ class Game:
                 for t in self.tanks:  # type : Tank
                     if p.sender is not t and t.check_hit(x, y):
                         was_hit = t
-                        self.respawn_tank(t)
+                        if not t.shielded:
+                            self.respawn_tank(t)
                         break
 
             if was_hit:
                 remove_projectiles_waitlist.add(p)
                 hit_tank = isinstance(was_hit, Tank)
-                self.make_explosion(x, y, short=(not hit_tank))
+                if hit_tank and not was_hit.shielded:
+                    self.make_explosion(x, y, short=(not hit_tank))
 
         for p in remove_projectiles_waitlist:
             p.remove_from_parent()

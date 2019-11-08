@@ -26,6 +26,8 @@ class Tank(GameObject):
 
     POSSIBLE_MOVE_STATES = 0, 2
 
+    SHIELD_TIME = 10
+
     @staticmethod
     def get_sprite_location(color: Color, type: Type, direction: Direction, state):
         # see: atlas.png to understand this code:
@@ -74,14 +76,28 @@ class Tank(GameObject):
                 w, h = v.get_width(), v.get_height()
                 print(k, w, h)
 
-        self.shield_timer = Timer(5)
-        self.shield_animator = Animator(delay=0.04, max_states=2)
-        self.shield_sprites = (
+        self._shielded = False
+        self._shield_timer = Timer(self.SHIELD_TIME)
+        self._shield_animator = Animator(delay=0.04, max_states=2)
+        self._shield_sprites = (
             atlas.image_at(32, 18, 2, 2),
             atlas.image_at(34, 18, 2, 2)
         )
 
         self.fire_timer = Timer(fire_delay, paused=True)
+
+    @property
+    def shielded(self):
+        return self._shielded
+
+    @shielded.setter
+    def shielded(self, v):
+        self._shielded = v
+        if self._shielded:
+            self._shield_timer = Timer(self.SHIELD_TIME)
+            self._shield_timer.start()
+        else:
+            self._shield_timer.stop()
 
     @property
     def direction(self):
@@ -124,14 +140,16 @@ class Tank(GameObject):
         if self.moving:
             self.move_animator()
 
-        if not self.shield_timer.tick():
-            shield_sprite = self.shield_sprites[self.shield_animator()]
+        if not self._shield_timer.tick():
+            shield_sprite = self._shield_sprites[self._shield_animator()]
             cx, cy = self.center_point
             sz = ATLAS().real_sprite_size
             screen.blit(shield_sprite, (cx - sz, cy - sz))
+        else:
+            self._shielded = False
 
     def activate_shield(self):
-        self.shield_timer.start()
+        self.shielded = self.SHIELD_TIME
 
     @property
     def gun_point(self):

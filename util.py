@@ -68,6 +68,9 @@ class Timer(Animator):
             self()
         return self.done
 
+    def stop(self):
+        self.done = True
+
 
 class ArmedTimer(Timer):
     def __init__(self, delay):
