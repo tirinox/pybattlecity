@@ -8,6 +8,8 @@ class Projectile(GameObject):
     CENTRAL_SHIFT_Y = -15
     SPEED = 8
 
+    SHIFT_BACK = 12
+
     def __init__(self, x, y, d: Direction, power=1, sender=None):
         super().__init__()
 
@@ -38,8 +40,11 @@ class Projectile(GameObject):
 
     def render(self, screen: pygame.Surface):
         x, y = self.position
-        screen.blit(self.sprite, (x + self.CENTRAL_SHIFT_X,
-                                  y + self.CENTRAL_SHIFT_Y))
+        sbx, sby = self.direction.vector
+        sbx *= self.SHIFT_BACK
+        sby *= self.SHIFT_BACK
+        screen.blit(self.sprite, (x + self.CENTRAL_SHIFT_X - sbx,
+                                  y + self.CENTRAL_SHIFT_Y - sby))
 
         if DEBUG:
             pygame.draw.rect(screen, (255, 0, 0), self.bounding_rect)
