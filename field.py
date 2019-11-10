@@ -277,11 +277,12 @@ class Field(GameObject):
         return xs + col * self._step, ys + row * self._step
 
     def check_hit(self, p: Projectile):
+        # todo: if a half brick - let it fly further
         candidates = set()
         for x, y in p.split_for_aim():
             cell = self.map.get_cell_by_coords(x, y)
             if cell is None:
-                return True
+                return True  # out of field - destroy
             elif cell.solid:
                 col, row = self.map.col_row_from_coords(x, y)
                 candidates.add((col, row))
