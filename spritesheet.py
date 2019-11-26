@@ -21,7 +21,6 @@ class SpriteSheet:
     @lru_cache(maxsize=None)
     def image_at(self, x, y, w=1, h=1, colorkey=COLOR_BLACK_KEY, auto_crop=False,
                  square=False):
-        # print(f'get sprite {x}, {y}, {w}, {h}, {colorkey}')
         s = self.sprite_size
         rect = pygame.Rect(x * s, y * s, w * s, h * s)
         image = pygame.Surface(rect.size).convert()
@@ -74,7 +73,7 @@ class SpriteSheet:
                 break
             bottom += 1
 
-        # print(f'left = {left}, top = {top}, right = {right}, bottom = {bottom}')
+
         crop_w = w - right - left
         crop_h = h - bottom - top
 
