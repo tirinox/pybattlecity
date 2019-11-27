@@ -11,14 +11,21 @@ class Explosion(GameObject):
         (42, 16, 4, 4)
     )
 
-    N_STATES = len(SPRITE_DESCRIPTORS)
-    N_STATES_SHORT = 3
+    TYPE_SUPER_SHORT = 'super_short'
+    TYPE_SHORT = 'short'
+    TYPE_FULL = 'full'
 
-    def __init__(self, x, y, short=False):
+    _n_states = {
+        TYPE_FULL: len(SPRITE_DESCRIPTORS),
+        TYPE_SHORT: 3,
+        TYPE_SUPER_SHORT: 2
+    }
+
+    def __init__(self, x, y, type=TYPE_FULL):
         super().__init__()
 
         self.position = x, y
-        n = self.N_STATES_SHORT if short else self.N_STATES
+        n = self._n_states[type]
         self.animator = Animator(0.08, n, once=True)
         self.sprites = [ATLAS().image_at(x, y, sx, sy) for
                         x, y, sx, sy in self.SPRITE_DESCRIPTORS]

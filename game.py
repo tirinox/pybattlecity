@@ -84,8 +84,8 @@ class Game:
         self.tanks.add_child(tank)
         self.tank = tank
 
-    def make_explosion(self, x, y, short=False):
-        self.scene.add_child(Explosion(x, y, short))
+    def make_explosion(self, x, y, expl_type):
+        self.scene.add_child(Explosion(x, y, expl_type))
 
     def fire(self, tank=None):
         tank = self.tank if tank is None else tank
@@ -164,7 +164,9 @@ class Game:
                 remove_projectiles_waitlist.add(p)
                 hit_tank = isinstance(was_hit, Tank)
                 if hit_tank and not was_hit.shielded:
-                    self.make_explosion(x, y, short=(not hit_tank))
+                    self.make_explosion(x, y, Explosion.TYPE_FULL)
+                elif not hit_tank:
+                    self.make_explosion(x, y, Explosion.TYPE_SUPER_SHORT)
 
         for p in remove_projectiles_waitlist:
             p.remove_from_parent()

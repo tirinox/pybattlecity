@@ -6,7 +6,6 @@ from math import floor
 from projectile import Projectile
 
 
-
 class DiscreteMap:
     def __init__(self, position, cell_size, cells_width=FIELD_WIDTH, cells_height=FIELD_HEIGHT, default_value=None):
         self.width = cells_width
