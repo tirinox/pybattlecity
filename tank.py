@@ -157,19 +157,20 @@ class Tank(GameObject):
         Calculate the coordinates of the gun of the tank
         :return: (x, y) coordinates of gun tip point
         """
-        x, y = self.position
-        _, _, w, h = self.bounding_rect
-        half_w, half_h = round(w / 2), round(h / 2)
-
-        d = self.direction
-        if d == Direction.UP:
-            return x, y - half_h - 1
-        elif d == Direction.DOWN:
-            return x, y + half_h + 1
-        elif d == Direction.LEFT:
-            return x - half_w - 1, y
-        elif d == Direction.RIGHT:
-            return x + half_w + 1, y
+        return self.position
+        # x, y = self.position
+        # _, _, w, h = self.bounding_rect
+        # half_w, half_h = round(w / 2), round(h / 2)
+        #
+        # d = self.direction
+        # if d == Direction.UP:
+        #     return x, y - half_h - 1
+        # elif d == Direction.DOWN:
+        #     return x, y + half_h + 1
+        # elif d == Direction.LEFT:
+        #     return x - half_w - 1, y
+        # elif d == Direction.RIGHT:
+        #     return x + half_w + 1, y
 
     @property
     def center_point(self):

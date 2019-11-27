@@ -155,8 +155,9 @@ class Game:
                 for t in self.tanks:  # type : Tank
                     if p.sender is not t and t.check_hit(x, y):
                         was_hit = t
-                        if not t.shielded:
-                            self.respawn_tank(t)
+                        # fixme: debug
+                        # if not t.shielded:
+                        #     self.respawn_tank(t)
                         break
 
             if was_hit:

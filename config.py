@@ -3,6 +3,7 @@ import sys
 
 FIELD_DEBUG = '--field-debug' in sys.argv
 DEBUG = '--debug' in sys.argv
+PROJECTILE_DEBUG = '--projectile-debug' in sys.argv
 
 GAME_WIDTH = 540
 GAME_HEIGHT = 480

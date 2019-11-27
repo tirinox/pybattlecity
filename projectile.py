@@ -8,7 +8,7 @@ class Projectile(GameObject):
     CENTRAL_SHIFT_Y = -15
     SPEED = 8
 
-    SHIFT_BACK = 12
+    SHIFT_BACK = -2
 
     def __init__(self, x, y, d: Direction, power=1, sender=None):
         super().__init__()
@@ -46,10 +46,11 @@ class Projectile(GameObject):
         screen.blit(self.sprite, (x + self.CENTRAL_SHIFT_X - sbx,
                                   y + self.CENTRAL_SHIFT_Y - sby))
 
-        if DEBUG:
-            pygame.draw.rect(screen, (255, 0, 0), self.bounding_rect)
-            for x, y in self.split_for_aim():
-                pygame.draw.circle(screen, (0, 100, 0), (x, y), 5)
+        if PROJECTILE_DEBUG:
+            # pygame.draw.rect(screen, (255, 0, 0), self.bounding_rect)
+            # for x, y in self.split_for_aim():
+            #     pygame.draw.circle(screen, (0, 100, 0), (x, y), 5)
+            pygame.draw.circle(screen, (0, 200, 0), (x, y), 4)
 
         if not self.on_screen:
             self.remove_from_parent()
