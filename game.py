@@ -188,3 +188,10 @@ class Game:
         dbg_text = f'Objects: {self.scene.total_children - 1}'
         dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
         screen.blit(dbg_label, (5, 5))
+
+    # --- test ---
+
+    def testus(self):
+        for p in self.field.respawn_points():
+            x, y = self.field.map.coord_by_col_and_row(*p)
+            self.make_explosion(x, y, Explosion.TYPE_FULL)

@@ -25,6 +25,8 @@ if __name__ == '__main__':
                     game.fire()
                 elif event.key == K_r:
                     game = Game()
+                elif event.key == K_p:
+                    game.testus()
 
         keys = pygame.key.get_pressed()
 
