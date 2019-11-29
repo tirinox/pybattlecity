@@ -223,9 +223,12 @@ class Field(GameObject):
         return bool(candidates)
 
     @staticmethod
-    def respawn_points():
+    def respawn_points(is_enemy):
         return [
             (1, 1),
             (13, 1),
             (25, 1)
+        ] if is_enemy else [
+            (10, 25),
+            (16, 25)
         ]

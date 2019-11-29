@@ -30,7 +30,7 @@ class Game:
         self.scene.add_child(self.tanks)
 
         tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
-        tank.place(self.field.get_center_of_cell(10, 25))
+        self.respawn_tank(tank)
         tank.activate_shield()
         self.tanks.add_child(tank)
         self.my_tank_move_to_direction = None
@@ -51,13 +51,13 @@ class Game:
 
     def respawn_tank(self, t: Tank):
         my = t is self.tank
-        pos = (10, 25) if my else (9, 1)
+        pos = random.choice(self.field.respawn_points(not my))
         t.place(self.field.get_center_of_cell(*pos))
 
     def make_enemy(self):
         enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
         enemy_tank.direction = Direction.DOWN
-        enemy_tank.place(self.field.get_center_of_cell(9, 1))
+        self.respawn_tank(enemy_tank)
         self.enemy_tank = enemy_tank
         self.tanks.add_child(enemy_tank)
         self.enemy_ai = AI(self.enemy_tank, enemies=[self.tank], field=self.field)
@@ -104,8 +104,12 @@ class Game:
                 b.remove_from_parent()
                 self.make_bonus()
 
+    @property
+    def all_mature_tanks(self):
+        return (t for t in self.tanks if not t.is_spawning)
+
     def update_tanks(self):
-        for tank in self.tanks:
+        for tank in self.all_mature_tanks:
             self.field.oc_map.fill_rect(tank.bounding_rect, tank, only_if_empty=True)
 
         if self.my_tank_move_to_direction is None:
@@ -119,7 +123,7 @@ class Game:
             self.enemy_ai.want_to_fire = False
             self.fire(self.enemy_ai.tank)
 
-        for tank in self.tanks:
+        for tank in self.all_mature_tanks:
             bb = tank.bounding_rect
             if not self.field.oc_map.test_rect(bb, good_values=(None, tank)):
                 push_back = True
@@ -152,12 +156,11 @@ class Game:
                 self.my_base.broken = True
                 was_hit = self.my_base
             else:
-                for t in self.tanks:  # type : Tank
+                for t in self.all_mature_tanks:  # type : Tank
                     if p.sender is not t and t.check_hit(x, y):
                         was_hit = t
-                        # fixme: debug
-                        # if not t.shielded:
-                        #     self.respawn_tank(t)
+                        if not t.shielded:
+                            self.respawn_tank(t)
                         break
 
             if was_hit:
@@ -192,6 +195,7 @@ class Game:
     # --- test ---
 
     def testus(self):
-        for p in self.field.respawn_points():
-            x, y = self.field.map.coord_by_col_and_row(*p)
-            self.make_explosion(x, y, Explosion.TYPE_FULL)
+        # for p in self.field.respawn_points(is_enemy=True):
+        #     x, y = self.field.map.coord_by_col_and_row(*p)
+        #     self.make_explosion(x, y, Explosion.TYPE_FULL)
+        self.respawn_tank(self.tank)

@@ -53,6 +53,7 @@ class Tank(GameObject):
         self._direction = Direction.UP
         self.color = color
         self.tank_type = tank_type
+        self.is_spawning = False
 
         self.moving = False
         self.move_animator = Animator(delay=0.1, max_states=2)
@@ -134,13 +135,15 @@ class Tank(GameObject):
         cy = round(sprite.get_height() / 2)
 
         x, y = self.position
-        screen.blit(sprite, (x - cx, y - cy))
+
+        if not self.is_spawning:
+            screen.blit(sprite, (x - cx, y - cy))
 
         # animate sprite when moving
         if self.moving:
             self.move_animator()
 
-        if not self._shield_timer.tick():
+        if not self._shield_timer.tick() or self.is_spawning:
             shield_sprite = self._shield_sprites[self._shield_animator()]
             cx, cy = self.center_point
             sz = ATLAS().real_sprite_size
