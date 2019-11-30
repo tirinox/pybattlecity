@@ -4,8 +4,8 @@ from math import ceil, floor
 
 
 class Tank(GameObject):
-    SPEED_NORMAL = 4
-    SPEED_FAST = 6
+    SPEED_NORMAL = 2
+    SPEED_FAST = 3
 
     class Color(Enum):
         # the value is (x, y) location on the sprite sheet in 8px blocks
