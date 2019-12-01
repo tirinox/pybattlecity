@@ -1,4 +1,4 @@
-from util import GameObject, Direction, rect_intersection
+from util import GameObject, Direction, rect_intersection, point_in_rect_eq
 from config import *
 from enum import Enum, auto
 import pygame
@@ -195,7 +195,6 @@ class Field(GameObject):
         return xs + col * self._step, ys + row * self._step
 
     def check_hit(self, p: Projectile):
-        # todo: if a half brick - let it fly further
         candidates = set()
         for x, y in p.split_for_aim():
             cell = self.map.get_cell_by_coords(x, y)
@@ -203,24 +202,32 @@ class Field(GameObject):
                 return True  # out of field - destroy
             elif cell.solid:
                 col, row = self.map.col_row_from_coords(x, y)
-                candidates.add((col, row))
+                candidates.add((col, row, x, y))
 
-        for col, row in candidates:
+        hit = False
+        for col, row, px, py in candidates:
             cell = self.map.get_cell_by_col_row(col, row)  # type: CellType
-            if cell == cell.BRICK:
-                new_cell = {
-                    Direction.LEFT: cell.BRICK_LEFT,
-                    Direction.RIGHT: cell.BRICK_RIGHT,
-                    Direction.UP: cell.BRICK_TOP,
-                    Direction.DOWN: cell.BRICK_BOTTOM
-                }[p.direction]
-            elif cell.is_half_brick:
-                new_cell = cell.FREE
-            else:
-                continue
-            self.map.set_cell_col_row(col, row, new_cell)
 
-        return bool(candidates)
+            cx, cy = self.map.coord_by_col_and_row(col, row)
+            abs_cell_rect = cell.calculate_rect(cx, cy, self._step)
+
+            if point_in_rect_eq(px, py, abs_cell_rect):
+                hit = True
+
+                if cell == cell.BRICK:
+                    new_cell = {
+                        Direction.LEFT: cell.BRICK_LEFT,
+                        Direction.RIGHT: cell.BRICK_RIGHT,
+                        Direction.UP: cell.BRICK_TOP,
+                        Direction.DOWN: cell.BRICK_BOTTOM
+                    }[p.direction]
+                elif cell.is_half_brick:
+                    new_cell = cell.FREE
+                else:
+                    continue
+                self.map.set_cell_col_row(col, row, new_cell)
+
+        return hit
 
     @staticmethod
     def respawn_points(is_enemy):
