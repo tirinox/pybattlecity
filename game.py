@@ -133,6 +133,15 @@ class Game:
             if push_back:
                 tank.undo_move()
 
+    def is_player_tank(self, t: Tank):
+        return t is self.tank
+
+    def kill_tank(self, t: Tank):
+        if not self.is_player_tank(t):
+            self.enemy_ai.reset()
+
+        self.respawn_tank(t)
+        
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
             r = extend_rect((*p.position, 0, 0), 2)
@@ -160,7 +169,7 @@ class Game:
                     if p.sender is not t and t.check_hit(x, y):
                         was_hit = t
                         if not t.shielded:
-                            self.respawn_tank(t)
+                            self.kill_tank(t)
                         break
 
             if was_hit:

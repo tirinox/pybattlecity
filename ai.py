@@ -30,3 +30,7 @@ class AI:
 
         self.tank.remember_position()
         self.tank.move_tank(self.tank.direction)
+
+    def reset(self):
+        self.tank.direction = Direction.random()
+{}
