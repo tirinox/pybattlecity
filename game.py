@@ -102,6 +102,7 @@ class Game:
         for b in self.bonues:  # type: Bonus
             if b.intersects_rect(self.tank.bounding_rect):
                 b.remove_from_parent()
+                self.tank.shielded = True
                 self.make_bonus()
 
     @property
