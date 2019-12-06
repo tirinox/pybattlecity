@@ -3,6 +3,7 @@ from field import Field
 from projectile import Projectile
 from tank import Tank
 from util import *
+from ui import *
 from explosion import Explosion
 from my_base import MyBase
 from bonus import Bonus, BonusType
@@ -87,8 +88,15 @@ class Game:
     def make_explosion(self, x, y, expl_type):
         self.scene.add_child(Explosion(x, y, expl_type))
 
+    def is_friend(self, tank):
+        return tank is self.tank
+
     def fire(self, tank=None):
         tank = self.tank if tank is None else tank
+
+        if self.is_game_over and self.is_friend(tank):
+            return
+
         if tank.try_fire():
             projectile = Projectile(*tank.gun_point, tank.direction, sender=tank)
             self.projectiles.add_child(projectile)
@@ -109,15 +117,20 @@ class Game:
     def all_mature_tanks(self):
         return (t for t in self.tanks if not t.is_spawning)
 
+    @property
+    def is_game_over(self):
+        return self.my_base.broken
+
     def update_tanks(self):
         for tank in self.all_mature_tanks:
             self.field.oc_map.fill_rect(tank.bounding_rect, tank, only_if_empty=True)
 
-        if self.my_tank_move_to_direction is None:
-            self.tank.stop()
-            self.tank.align()
-        else:
-            self.move_tank(self.my_tank_move_to_direction, self.tank)
+        if not self.is_game_over:
+            if self.my_tank_move_to_direction is None:
+                self.tank.stop()
+                self.tank.align()
+            else:
+                self.move_tank(self.my_tank_move_to_direction, self.tank)
 
         self.enemy_ai.update()
         if self.enemy_ai.want_to_fire:
@@ -142,6 +155,11 @@ class Game:
             self.enemy_ai.reset()
 
         self.respawn_tank(t)
+
+    def make_game_over(self):
+        self.my_base.broken = True
+        go = GameOverLabel()
+        self.scene.add_child(go)
         
     def update_projectiles(self):
         for p in self.projectiles:  # type: Projectile
@@ -163,7 +181,7 @@ class Game:
             if self.field.check_hit(p):
                 was_hit = self.field
             elif self.my_base.check_hit(x, y):
-                self.my_base.broken = True
+                self.make_game_over()
                 was_hit = self.my_base
             else:
                 for t in self.all_mature_tanks:  # type : Tank

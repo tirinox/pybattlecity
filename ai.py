@@ -33,4 +33,3 @@ class AI:
 
     def reset(self):
         self.tank.direction = Direction.random()
-{}
