@@ -38,6 +38,11 @@ class Game:
 
         self.make_enemy()
 
+        sp_tank = Tank(Tank.Color.PURPLE, Tank.Type.ENEMY_MIDDLE)
+        self.respawn_tank(sp_tank)
+        sp_tank.is_spawning = True
+        self.tanks.add_child(sp_tank)
+
         # projectiles --
         self.projectiles = GameObject()
         self.scene.add_child(self.projectiles)
@@ -217,6 +222,9 @@ class Game:
 
         # - 1 because the scene is not literally an object
         dbg_text = f'Objects: {self.scene.total_children - 1}'
+        if self.is_game_over:
+            dbg_text = 'Press R to restart! ' + dbg_text
+
         dbg_label = self.font_debug.render(dbg_text, 1, (255, 255, 255))
         screen.blit(dbg_label, (5, 5))
 
