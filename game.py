@@ -7,7 +7,7 @@ from ui import *
 from explosion import Explosion
 from my_base import MyBase
 from bonus import Bonus, BonusType
-from ai import AI
+from ai import EnemyFractionAI
 import random
 
 
@@ -30,43 +30,40 @@ class Game:
         self.tanks = GameObject()
         self.scene.add_child(self.tanks)
 
-        tank = self.tank = Tank(Tank.Color.YELLOW, Tank.Type.LEVEL_1)
-        self.respawn_tank(tank)
-        tank.activate_shield()
-        self.tanks.add_child(tank)
-        self.my_tank_move_to_direction = None
-
+        self.make_my_tank()
         self.make_enemy()
-
-        sp_tank = Tank(Tank.Color.PURPLE, Tank.Type.ENEMY_MIDDLE)
-        self.respawn_tank(sp_tank)
-        sp_tank.is_spawning = True
-        self.tanks.add_child(sp_tank)
 
         # projectiles --
         self.projectiles = GameObject()
         self.scene.add_child(self.projectiles)
-
-        # else --
-        self.font_debug = pygame.font.Font(None, 18)
 
         # bonuses --
         self.bonues = GameObject()
         self.scene.add_child(self.bonues)
         self.make_bonus()
 
+        # else --
+        self.font_debug = pygame.font.Font(None, 18)
+
     def respawn_tank(self, t: Tank):
-        my = t is self.tank
-        pos = random.choice(self.field.respawn_points(not my))
+        pos = random.choice(self.field.respawn_points(not self.is_friend(t)))
         t.place(self.field.get_center_of_cell(*pos))
 
+    def make_my_tank(self):
+        self.my_tank = Tank(Tank.FRIEND, Tank.Color.YELLOW, Tank.Type.LEVEL_1)
+        self.respawn_tank(self.my_tank)
+        self.my_tank.activate_shield()
+        self.tanks.add_child(self.my_tank)
+        self.my_tank_move_to_direction = None
+
     def make_enemy(self):
-        enemy_tank = Tank(Tank.Color.PLAIN, Tank.Type.LEVEL_1)
+        self.ai = EnemyFractionAI(self.field, self.tanks)
+
+        enemy_tank = Tank(Tank.ENEMY, Tank.Color.PLAIN, Tank.Type.LEVEL_1)
         enemy_tank.direction = Direction.DOWN
         self.respawn_tank(enemy_tank)
         self.enemy_tank = enemy_tank
         self.tanks.add_child(enemy_tank)
-        self.enemy_ai = AI(self.enemy_tank, enemies=[self.tank], field=self.field)
 
     def make_bonus(self):
         col = self.r.randint(0, self.field.width - 1)
@@ -75,7 +72,7 @@ class Game:
         self.bonues.add_child(bonus)
 
     def switch_my_tank(self):
-        tank = self.tank
+        tank = self.my_tank
         t, d, p = tank.tank_type, tank.direction, tank.position
         tank.remove_from_parent()
 
@@ -88,16 +85,17 @@ class Game:
         tank.shielded = True
         tank.activate_shield()
         self.tanks.add_child(tank)
-        self.tank = tank
+        self.my_tank = tank
 
     def make_explosion(self, x, y, expl_type):
         self.scene.add_child(Explosion(x, y, expl_type))
 
     def is_friend(self, tank):
-        return tank is self.tank
+        return tank.fraction == tank.FRIEND
 
     def fire(self, tank=None):
-        tank = self.tank if tank is None else tank
+        tank = self.my_tank if tank is None else tank
+        tank.want_to_fire = False
 
         if self.is_game_over and self.is_friend(tank):
             return
@@ -107,15 +105,15 @@ class Game:
             self.projectiles.add_child(projectile)
 
     def move_tank(self, direction: Direction, tank=None):
-        tank = self.tank if tank is None else tank
+        tank = self.my_tank if tank is None else tank
         tank.remember_position()
         tank.move_tank(direction)
 
     def update_bonuses(self):
         for b in self.bonues:  # type: Bonus
-            if b.intersects_rect(self.tank.bounding_rect):
+            if b.intersects_rect(self.my_tank.bounding_rect):
                 b.remove_from_parent()
-                self.tank.shielded = True
+                self.my_tank.shielded = True
                 self.make_bonus()
 
     @property
@@ -132,17 +130,17 @@ class Game:
 
         if not self.is_game_over:
             if self.my_tank_move_to_direction is None:
-                self.tank.stop()
-                self.tank.align()
+                self.my_tank.stop()
+                self.my_tank.align()
             else:
-                self.move_tank(self.my_tank_move_to_direction, self.tank)
+                self.move_tank(self.my_tank_move_to_direction, self.my_tank)
 
-        self.enemy_ai.update()
-        if self.enemy_ai.want_to_fire:
-            self.enemy_ai.want_to_fire = False
-            self.fire(self.enemy_ai.tank)
+        self.ai.update()
 
         for tank in self.all_mature_tanks:
+            if tank.want_to_fire:
+                self.fire(tank)
+
             bb = tank.bounding_rect
             if not self.field.oc_map.test_rect(bb, good_values=(None, tank)):
                 push_back = True
@@ -153,12 +151,9 @@ class Game:
                 tank.undo_move()
 
     def is_player_tank(self, t: Tank):
-        return t is self.tank
+        return t is self.my_tank
 
     def kill_tank(self, t: Tank):
-        if not self.is_player_tank(t):
-            self.enemy_ai.reset()
-
         self.respawn_tank(t)
 
     def make_game_over(self):
@@ -231,7 +226,4 @@ class Game:
     # --- test ---
 
     def testus(self):
-        # for p in self.field.respawn_points(is_enemy=True):
-        #     x, y = self.field.map.coord_by_col_and_row(*p)
-        #     self.make_explosion(x, y, Explosion.TYPE_FULL)
-        self.respawn_tank(self.tank)
+        self.respawn_tank(self.my_tank)

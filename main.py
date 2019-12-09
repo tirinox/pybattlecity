@@ -47,7 +47,7 @@ if __name__ == '__main__':
         game.render(screen)
 
         if DEBUG:
-            pygame.draw.circle(screen, (0, 255, 255), game.tank.gun_point, 4, 1)
+            pygame.draw.circle(screen, (0, 255, 255), game.my_tank.gun_point, 4, 1)
 
         pygame.display.flip()
 

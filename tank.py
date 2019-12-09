@@ -28,6 +28,9 @@ class Tank(GameObject):
 
     SHIELD_TIME = 10
 
+    FRIEND = 'friend'
+    ENEMY = 'enemy'
+
     @staticmethod
     def get_sprite_location(color: Color, type: Type, direction: Direction, state):
         # see: atlas.png to understand this code:
@@ -47,9 +50,13 @@ class Tank(GameObject):
         else:
             self.speed = self.SPEED_NORMAL
 
-    def __init__(self, color=Color.YELLOW, tank_type=Type.LEVEL_1, fire_delay=0.5):
+    def fire(self):
+        self.want_to_fire = True
+
+    def __init__(self, fraction, color=Color.YELLOW, tank_type=Type.LEVEL_1, fire_delay=0.5):
         super().__init__()
 
+        self.fraction = fraction
         self._direction = Direction.UP
         self.color = color
         self.tank_type = tank_type
@@ -59,6 +66,8 @@ class Tank(GameObject):
         self.move_animator = Animator(delay=0.1, max_states=2)
 
         self.remember_position()
+
+        self.want_to_fire = False
 
         atlas = ATLAS()
 
@@ -193,6 +202,7 @@ class Tank(GameObject):
         self.remember_position()
 
     def move_tank(self, direction: Direction):
+        self.remember_position()
         self.moving = True
         self.direction = direction
         vx, vy = direction.vector

@@ -1,26 +1,21 @@
 from tank import Tank, Direction
 from field import Field
-from util import ArmedTimer
+from util import ArmedTimer, GameObject
 import random
 
 
-class AI:
-    def __init__(self, tank: Tank, enemies: [Tank], field: Field):
+class TankAI:
+    def __init__(self, tank: Tank, field: Field):
         self.tank = tank
         self.field = field
-        self.enemies = enemies
 
         self.fire_timer = ArmedTimer(delay=1.0)
         self.dir_timer = ArmedTimer(delay=2.0)
 
-        self.want_to_fire = False
-
-    def fire(self):
-        self.want_to_fire = True
 
     def update(self):
         if self.fire_timer.tick():
-            self.fire()
+            self.tank.fire()
             self.fire_timer.start()
 
         if self.dir_timer.tick():
@@ -28,8 +23,24 @@ class AI:
             self.dir_timer.delay = random.uniform(0.3, 3.0)
             self.dir_timer.start()
 
-        self.tank.remember_position()
         self.tank.move_tank(self.tank.direction)
 
     def reset(self):
         self.tank.direction = Direction.random()
+
+
+class EnemyFractionAI:
+    def __init__(self, field: Field, tanks: GameObject):
+        self.tanks = tanks
+        self.field = field
+        self.ais = {}
+
+    @property
+    def all_enemies(self):
+        return [t for t in self.tanks if t.fraction == Tank.ENEMY]
+
+    def update(self):
+        for t in self.all_enemies:
+            if not hasattr(t, 'ai'):
+                t.ai = TankAI(t, self.field)
+            t.ai.update()
