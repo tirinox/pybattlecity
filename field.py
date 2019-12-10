@@ -239,3 +239,8 @@ class Field(GameObject):
             (10, 25),
             (16, 25)
         ]
+
+    def is_free_location_to_place_tank(self, x, y):
+        lx, ly = self.map.coord_by_col_and_row(x, y)
+        bb = lx - self._step, ly - self._step, self._step * 2, self._step * 2
+        return self.oc_map.test_rect(bb)

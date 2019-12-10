@@ -59,12 +59,6 @@ class Game:
     def make_enemy(self):
         self.ai = EnemyFractionAI(self.field, self.tanks)
 
-        enemy_tank = Tank(Tank.ENEMY, Tank.Color.PLAIN, Tank.Type.LEVEL_1)
-        enemy_tank.direction = Direction.DOWN
-        self.respawn_tank(enemy_tank)
-        self.enemy_tank = enemy_tank
-        self.tanks.add_child(enemy_tank)
-
     def make_bonus(self):
         col = self.r.randint(0, self.field.width - 1)
         row = self.r.randint(0, self.field.height - 1)
