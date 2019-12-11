@@ -148,7 +148,7 @@ class Game:
         return t is self.my_tank
 
     def kill_tank(self, t: Tank):
-        self.respawn_tank(t)
+        t.remove_from_parent()
 
     def make_game_over(self):
         self.my_base.broken = True
