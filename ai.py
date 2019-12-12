@@ -24,6 +24,10 @@ class TankAI:
         if self.tank.is_spawning:
             if self.spawn_timer.tick():
                 self.tank.is_spawning = False
+                # if self.field.oc_map.test_rect(self.tank.bounding_rect):
+                #     self.tank.is_spawning = False
+                # else:
+                #     return
             else:
                 return
 
@@ -50,9 +54,8 @@ class EnemyFractionAI:
     def __init__(self, field: Field, tanks: GameObject):
         self.tanks = tanks
         self.field = field
-        self.ais = {}
         self.spawn_points = {
-            (x, y): False for x, y in field.respawn_points(True)
+            (x, y): None for x, y in field.respawn_points(True)
         }
         self.spawn_timer = ArmedTimer(self.RESPAWN_TIMER)
         self.try_to_spawn_tank()
@@ -61,7 +64,7 @@ class EnemyFractionAI:
     def all_enemies(self):
         return [t for t in self.tanks if t.fraction == Tank.ENEMY]
 
-    def get_next_enemy(self):
+    def get_next_enemy(self, pos):
         t_type = random.choice([
             Tank.Type.ENEMY_SIMPLE,
             Tank.Type.ENEMY_FAST,
@@ -73,13 +76,22 @@ class EnemyFractionAI:
 
         new_tank.ai = TankAI(new_tank, self.field)
 
-        pos = random.choice(self.field.respawn_points(True))
         new_tank.place(self.field.get_center_of_cell(*pos))
         return new_tank
 
     def try_to_spawn_tank(self):
-        if len(self.all_enemies) < self.MAX_ENEMIES:
-            tank = self.get_next_enemy()
+        free_locations = list()
+        for loc, tank in self.spawn_points.items():
+            if isinstance(tank, Tank):
+                if not tank.is_spawning:
+                    self.spawn_points[loc] = None
+            else:
+                free_locations.append(loc)
+
+        if free_locations and len(self.all_enemies) < self.MAX_ENEMIES:
+            pos = random.choice(free_locations)
+            tank = self.get_next_enemy(pos)
+            self.spawn_points[pos] = tank
             self.tanks.add_child(tank)
 
     def update(self):

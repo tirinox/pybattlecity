@@ -83,4 +83,8 @@ class OccupancyMap(DiscreteMap):
                 self.set_cell_col_row(col, row, v)
 
     def test_rect(self, rect, good_values=(0, 1)):
-        return all(self.get_cell_by_col_row(c, r) in good_values for c, r in self.find_col_row_of_rect(rect))
+        cells_to_test = self.find_col_row_of_rect(rect)
+        return self.test_cells(cells_to_test, good_values)
+
+    def test_cells(self, cols_rows, good_values=(0,)):
+        return all(self.get_cell_by_col_row(c, r) in good_values for c, r in cols_rows)

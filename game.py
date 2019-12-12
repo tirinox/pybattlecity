@@ -148,6 +148,7 @@ class Game:
         return t is self.my_tank
 
     def kill_tank(self, t: Tank):
+        self.make_explosion(*t.center_point, Explosion.TYPE_FULL)
         t.remove_from_parent()
 
     def make_game_over(self):
@@ -170,28 +171,25 @@ class Game:
                 remove_projectiles_waitlist.add(p)
                 remove_projectiles_waitlist.add(something)
 
-            was_hit = None
+            was_stricken_object = False
             x, y = p.position
             if self.field.check_hit(p):
-                was_hit = self.field
+                was_stricken_object = True
+                self.make_explosion(*p.position, Explosion.TYPE_SUPER_SHORT)
             elif self.my_base.check_hit(x, y):
                 self.make_game_over()
-                was_hit = self.my_base
+                was_stricken_object = True
+                self.make_explosion(*self.my_base.center_point, Explosion.TYPE_FULL)
             else:
                 for t in self.all_mature_tanks:  # type : Tank
-                    if p.sender is not t and t.check_hit(x, y):
-                        was_hit = t
-                        if not t.shielded:
+                    if t is not p.sender and t.check_hit(x, y):
+                        was_stricken_object = True
+                        if not t.shielded and p.sender.fraction != t.fraction:
                             self.kill_tank(t)
                         break
 
-            if was_hit:
+            if was_stricken_object:
                 remove_projectiles_waitlist.add(p)
-                hit_tank = isinstance(was_hit, Tank)
-                if hit_tank and not was_hit.shielded:
-                    self.make_explosion(x, y, Explosion.TYPE_FULL)
-                elif not hit_tank:
-                    self.make_explosion(x, y, Explosion.TYPE_SUPER_SHORT)
 
         for p in remove_projectiles_waitlist:
             p.remove_from_parent()
