@@ -15,7 +15,7 @@ class TankAI:
     def pick_direction(self):
         c, r = self.field.map.col_row_from_coords(*self.tank.position)
         prohibited_dir = set()
-        prohibited_dir.add(self.tank.direction)
+        # prohibited_dir.add(self.tank.direction)
 
         if c <= 1:
             prohibited_dir.add(Direction.LEFT)
