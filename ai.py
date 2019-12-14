@@ -5,12 +5,27 @@ import random
 
 
 class TankAI:
-    SPAWNING_DELAY = 3.0
+    SPAWNING_DELAY = 1.5
     FIRE_TIMER = 1.0
 
     @staticmethod
     def dir_delay():
         return random.uniform(0.3, 3.0)
+
+    def pick_direction(self):
+        c, r = self.field.map.col_row_from_coords(*self.tank.position)
+        prohibited_dir = set()
+        prohibited_dir.add(self.tank.direction)
+
+        if c <= 1:
+            prohibited_dir.add(Direction.LEFT)
+        if r <= 1:
+            prohibited_dir.add(Direction.UP)
+        if c >= self.field.map.width - 2:
+            prohibited_dir.add(Direction.RIGHT)
+        if r >= self.field.map.height - 2:
+            prohibited_dir.add(Direction.DOWN)
+        return random.choice(list(Direction.all() - prohibited_dir))
 
     def __init__(self, tank: Tank, field: Field):
         self.tank = tank
@@ -36,7 +51,7 @@ class TankAI:
             self.fire_timer.start()
 
         if self.dir_timer.tick():
-            self.tank.direction = Direction.random()
+            self.tank.direction = self.pick_direction()
             self.dir_timer.delay = self.dir_delay()
             self.dir_timer.start()
 

@@ -30,6 +30,10 @@ class Direction(Enum):
     def random(cls):
         return random.choice(list(cls))
 
+    @classmethod
+    def all(cls):
+        return set(cls)
+
 
 class Animator:
     def __init__(self, delay=0.1, max_states=5, once=False):
