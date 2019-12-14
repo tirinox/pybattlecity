@@ -149,7 +149,11 @@ class Game:
 
     def kill_tank(self, t: Tank):
         self.make_explosion(*t.center_point, Explosion.TYPE_FULL)
-        t.remove_from_parent()
+
+        if self.is_friend(t):
+            self.respawn_tank(t)
+        else:
+            t.remove_from_parent()
 
     def make_game_over(self):
         self.my_base.broken = True
