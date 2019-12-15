@@ -53,14 +53,34 @@ class Tank(GameObject):
     def fire(self):
         self.want_to_fire = True
 
+    def _update_sprites(self):
+        atlas = ATLAS()
+        sprite_locations = {(d, s): self.get_sprite_location(self.color, self.tank_type, d, s)
+                            for d in Direction
+                            for s in self.POSSIBLE_MOVE_STATES}
+
+        self.sprites = {key: atlas.image_at(*location, auto_crop=True, square=False)
+                        for key, location in sprite_locations.items()}
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, color):
+        self._color = color
+        self._update_sprites()
+
     def __init__(self, fraction, color=Color.YELLOW, tank_type=Type.LEVEL_1, fire_delay=0.5):
         super().__init__()
 
         self.fraction = fraction
         self._direction = Direction.UP
-        self.color = color
         self.tank_type = tank_type
+        self.color = color
         self.is_spawning = False
+        
+        self.hit = False
 
         self.moving = False
         self.move_animator = Animator(delay=0.1, max_states=2)
@@ -73,13 +93,6 @@ class Tank(GameObject):
 
         sz = atlas.real_sprite_size * 2 - 2
         self.size = sz, sz
-
-        sprite_locations = {(d, s): self.get_sprite_location(color, tank_type, d, s)
-                            for d in Direction
-                            for s in self.POSSIBLE_MOVE_STATES}
-
-        self.sprites = {key: atlas.image_at(*location, auto_crop=True, square=False)
-                        for key, location in sprite_locations.items()}
 
         if DEBUG:
             for k, v in self.sprites.items():

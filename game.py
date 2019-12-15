@@ -153,7 +153,7 @@ class Game:
         if self.is_friend(t):
             self.respawn_tank(t)
         else:
-            t.remove_from_parent()
+            t.hit = True
 
     def make_game_over(self):
         self.my_base.broken = True

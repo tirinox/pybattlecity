@@ -46,6 +46,16 @@ class TankAI:
             else:
                 return
 
+        if self.tank.hit:
+            if self.tank.tank_type == Tank.Type.ENEMY_HEAVY:
+                if self.tank.color == Tank.Color.PLAIN:
+                    self.tank.color = Tank.Color.PURPLE
+                else:
+                    self.tank.remove_from_parent()
+            else:
+                self.tank.remove_from_parent()
+            self.tank.hit = False
+
         if self.fire_timer.tick():
             self.tank.fire()
             self.fire_timer.start()
