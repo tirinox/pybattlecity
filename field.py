@@ -117,6 +117,7 @@ class Field(GameObject):
         self.oc_map = OccupancyMap(self.position, self._step // 2, cells_width * 2, cells_height * 2)
 
         self.position = (40, 40)
+        self.size = (self._step * self.width, self._step * self.height)
 
         self._sprites = {
             t: ATLAS().image_at(*t.sprite_location, 1, 1, colorkey=None) for t in CellType

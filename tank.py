@@ -107,6 +107,11 @@ class Tank(GameObject):
             atlas.image_at(34, 18, 2, 2)
         )
 
+        self._spawn_sprites = [
+            atlas.image_at(xi, 12, 2, 2) for xi in range(32, 40, 2)
+        ]
+        self._spawn_animator = Animator(delay=0.1, max_states=len(self._spawn_sprites))
+
         self.fire_timer = Timer(fire_delay, paused=True)
 
     @property
@@ -153,25 +158,32 @@ class Tank(GameObject):
 
     def render(self, screen):
         sprite = self.sprites[self.sprite_key]
-        cx = round(sprite.get_width() / 2)
-        cy = round(sprite.get_height() / 2)
 
         x, y = self.position
 
+        # tank sprite is trimmed (it is smaller than 2x2 sprite)
+        ctx = sprite.get_width() // 2
+        cty = sprite.get_height() // 2
+
         if not self.is_spawning:
-            screen.blit(sprite, (x - cx, y - cy))
+            screen.blit(sprite, (x - ctx, y - cty))
 
         # animate sprite when moving
         if self.moving:
             self.move_animator()
 
-        if not self._shield_timer.tick() or self.is_spawning:
+        # it is size of a half of full 2x2 sprite, effects have full size unlike tanks
+        half_full_size = ATLAS().real_sprite_size
+
+        if not self._shield_timer.tick():
             shield_sprite = self._shield_sprites[self._shield_animator()]
-            cx, cy = self.center_point
-            sz = ATLAS().real_sprite_size
-            screen.blit(shield_sprite, (cx - sz, cy - sz))
+            screen.blit(shield_sprite, (x - half_full_size, y - half_full_size))
         else:
             self._shielded = False
+
+        if self.is_spawning:
+            spawn_sprite = self._spawn_sprites[self._spawn_animator()]
+            screen.blit(spawn_sprite, (x - half_full_size, y - half_full_size))
 
     def activate_shield(self):
         self.shielded = self.SHIELD_TIME

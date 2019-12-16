@@ -158,6 +158,7 @@ class Game:
     def make_game_over(self):
         self.my_base.broken = True
         go = GameOverLabel()
+        go.place_at_center(self.field)
         self.scene.add_child(go)
         
     def update_projectiles(self):
