@@ -190,6 +190,7 @@ class Game:
                     if t is not p.sender and t.check_hit(x, y):
                         was_stricken_object = True
                         if not t.shielded and p.sender.fraction != t.fraction:
+                            self.make_explosion(*p.position, Explosion.TYPE_SHORT)
                             self.kill_tank(t)
                         break
 
