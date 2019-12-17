@@ -30,10 +30,21 @@ class TankAI:
     def __init__(self, tank: Tank, field: Field):
         self.tank = tank
         self.field = field
+        self.is_destroyed = False
 
         self.fire_timer = ArmedTimer(delay=self.FIRE_TIMER)
         self.dir_timer = ArmedTimer(delay=self.dir_delay())
         self.spawn_timer = ArmedTimer(delay=self.SPAWNING_DELAY)
+
+    def _destroy(self):
+        self.tank.remove_from_parent()
+        self.is_destroyed = True
+
+    def _degrade(self):
+        if self.tank.color == Tank.Color.PLAIN:
+            self.tank.color = Tank.Color.GREEN
+        else:
+            self._destroy()
 
     def update(self):
         if self.tank.is_spawning:
@@ -48,12 +59,9 @@ class TankAI:
 
         if self.tank.hit:
             if self.tank.tank_type == Tank.Type.ENEMY_HEAVY:
-                if self.tank.color == Tank.Color.PLAIN:
-                    self.tank.color = Tank.Color.PURPLE
-                else:
-                    self.tank.remove_from_parent()
+                self._degrade()
             else:
-                self.tank.remove_from_parent()
+                self._destroy()
             self.tank.hit = False
 
         if self.fire_timer.tick():
@@ -84,6 +92,7 @@ class EnemyFractionAI:
         }
         self.spawn_timer = ArmedTimer(self.RESPAWN_TIMER)
         self.try_to_spawn_tank()
+        self.on_tank_destroyed = lambda t: None
 
     @property
     def all_enemies(self):
@@ -100,6 +109,9 @@ class EnemyFractionAI:
         new_tank.is_spawning = True
 
         new_tank.ai = TankAI(new_tank, self.field)
+
+        if random.uniform(0, 1) > 0.5:
+            new_tank.is_bonus = True
 
         new_tank.place(self.field.get_center_of_cell(*pos))
         return new_tank
@@ -126,3 +138,5 @@ class EnemyFractionAI:
 
         for enemy_tank in self.all_enemies:
             enemy_tank.ai.update()
+            if enemy_tank.ai.is_destroyed:
+                self.on_tank_destroyed(enemy_tank)

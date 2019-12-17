@@ -82,6 +82,9 @@ class Tank(GameObject):
         
         self.hit = False
 
+        self.is_bonus = False
+        self._bonus_animator = Animator(delay=0.5, max_states=2)
+
         self.moving = False
         self.move_animator = Animator(delay=0.1, max_states=2)
 
@@ -171,6 +174,10 @@ class Tank(GameObject):
         # animate sprite when moving
         if self.moving:
             self.move_animator()
+
+        if self.is_bonus:
+            if self._bonus_animator():
+                self.color = Tank.Color.PURPLE if self.color is Tank.Color.PLAIN else Tank.Color.PLAIN
 
         # it is size of a half of full 2x2 sprite, effects have full size unlike tanks
         half_full_size = ATLAS().real_sprite_size

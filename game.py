@@ -40,7 +40,6 @@ class Game:
         # bonuses --
         self.bonues = GameObject()
         self.scene.add_child(self.bonues)
-        self.make_bonus()
 
         # else --
         self.font_debug = pygame.font.Font(None, 18)
@@ -56,13 +55,16 @@ class Game:
         self.tanks.add_child(self.my_tank)
         self.my_tank_move_to_direction = None
 
+    def _on_destroyed_tank(self, t: Tank):
+        if t.is_bonus:
+            self.make_bonus(*t.center_point)
+
     def make_enemy(self):
         self.ai = EnemyFractionAI(self.field, self.tanks)
+        self.ai.on_tank_destroyed = self._on_destroyed_tank
 
-    def make_bonus(self):
-        col = self.r.randint(0, self.field.width - 1)
-        row = self.r.randint(0, self.field.height - 1)
-        bonus = Bonus(BonusType.UPGRADE, *self.field.get_center_of_cell(col, row))
+    def make_bonus(self, x, y):
+        bonus = Bonus(BonusType.UPGRADE, x, y)
         self.bonues.add_child(bonus)
 
     def switch_my_tank(self):
@@ -108,7 +110,6 @@ class Game:
             if b.intersects_rect(self.my_tank.bounding_rect):
                 b.remove_from_parent()
                 self.my_tank.shielded = True
-                self.make_bonus()
 
     @property
     def all_mature_tanks(self):

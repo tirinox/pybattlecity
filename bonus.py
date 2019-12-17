@@ -20,9 +20,11 @@ class Bonus(GameObject):
         super().__init__()
         self.type = bonus_type
         self.sprite = ATLAS().image_at(*bonus_type.value, 2, 2)
-        self.position = x, y
-        sz = ATLAS().real_sprite_size * 2
-        self.size = (sz, sz)
+
+        sz = ATLAS().real_sprite_size
+        self.position = x - sz, y - sz
+
+        self.size = (sz * 2, sz * 2)
 
     def render(self, screen: Surface):
         screen.blit(self.sprite, self.position)
