@@ -64,7 +64,7 @@ class Game:
         self.ai.on_tank_destroyed = self._on_destroyed_tank
 
     def make_bonus(self, x, y):
-        bonus = Bonus(BonusType.UPGRADE, x, y)
+        bonus = Bonus(BonusType.random(), x, y)
         self.bonues.add_child(bonus)
 
     def switch_my_tank(self):

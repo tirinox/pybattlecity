@@ -1,7 +1,10 @@
-from util import GameObject, rect_intersection
-from pygame import Surface
+import random
 from enum import Enum
+
+from pygame import Surface
+
 from config import ATLAS
+from util import GameObject
 
 
 class BonusType(Enum):
@@ -13,6 +16,10 @@ class BonusType(Enum):
     DESTRUCTION = (40, 14)
     TOP_TANK = (42, 14)
     GUN = (44, 14)
+
+    @classmethod
+    def random(cls):
+        return random.choice(list(cls))
 
 
 class Bonus(GameObject):
