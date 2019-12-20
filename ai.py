@@ -49,11 +49,10 @@ class TankAI:
     def update(self):
         if self.tank.is_spawning:
             if self.spawn_timer.tick():
-                self.tank.is_spawning = False
-                # if self.field.oc_map.test_rect(self.tank.bounding_rect):
-                #     self.tank.is_spawning = False
-                # else:
-                #     return
+                if self.field.oc_map.test_rect(self.tank.bounding_rect, good_values=(None, self.tank)):
+                    self.tank.is_spawning = False
+                else:
+                    return
             else:
                 return
 

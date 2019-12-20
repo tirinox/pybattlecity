@@ -21,4 +21,4 @@ python3 main.py
 
 Screenshot:
 
-![screenshot](data/screenshot.png | width=320)
+![screenshot](data/screenshot.png)

@@ -44,6 +44,11 @@ class Game:
         # else --
         self.font_debug = pygame.font.Font(None, 18)
 
+        t1 = Tank(Tank.ENEMY, Tank.Color.PLAIN, tank_type=Tank.Type.ENEMY_HEAVY)
+        t1.is_bonus = True
+        t1.position = (100, 100)
+        self.scene.add_child(t1)
+
     def respawn_tank(self, t: Tank):
         pos = random.choice(self.field.respawn_points(not self.is_friend(t)))
         t.place(self.field.get_center_of_cell(*pos))
