@@ -44,6 +44,9 @@ class Game:
         # else --
         self.font_debug = pygame.font.Font(None, 18)
 
+        # to test bonus
+        # self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.DESTRUCTION)
+
     def respawn_tank(self, t: Tank):
         pos = random.choice(self.field.respawn_points(not self.is_friend(t)))
         t.place(self.field.get_center_of_cell(*pos))
@@ -63,8 +66,8 @@ class Game:
         self.ai = EnemyFractionAI(self.field, self.tanks)
         self.ai.on_tank_destroyed = self._on_destroyed_tank
 
-    def make_bonus(self, x, y):
-        bonus = Bonus(BonusType.random(), x, y)
+    def make_bonus(self, x, y, t=None):
+        bonus = Bonus(BonusType.random() if t is None else t, x, y)
         self.bonues.add_child(bonus)
 
     def switch_my_tank(self):
@@ -105,11 +108,21 @@ class Game:
         tank.remember_position()
         tank.move_tank(direction)
 
+    def apply_bonus(self, t: Tank, bonus: BonusType):
+        if bonus == bonus.DESTRUCTION:
+            for t in self.tanks:
+                if not t.is_spawning and t.fraction == Tank.ENEMY:
+                    self.kill_tank(t)
+        elif bonus == bonus.CASK:
+            t.shielded = True
+        else:
+            print(f'Bonus {bonus} not implemented yet.')
+
     def update_bonuses(self):
         for b in self.bonues:  # type: Bonus
             if b.intersects_rect(self.my_tank.bounding_rect):
                 b.remove_from_parent()
-                self.my_tank.shielded = True
+                self.apply_bonus(self.my_tank, b.type)
 
     @property
     def all_mature_tanks(self):
