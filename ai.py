@@ -2,6 +2,7 @@ from tank import Tank, Direction
 from field import Field
 from util import ArmedTimer, GameObject
 import random
+from itertools import cycle
 
 
 class TankAI:
@@ -90,20 +91,24 @@ class EnemyFractionAI:
             (x, y): None for x, y in field.respawn_points(True)
         }
         self.spawn_timer = ArmedTimer(self.RESPAWN_TIMER)
-        self.try_to_spawn_tank()
         self.on_tank_destroyed = lambda t: None
+
+        self.enemy_queue = cycle([
+            Tank.Type.ENEMY_SIMPLE,
+            Tank.Type.ENEMY_FAST,
+            Tank.Type.ENEMY_MIDDLE,
+            Tank.Type.ENEMY_HEAVY,
+        ])
+        self._enemy_queue_iter = iter(self.enemy_queue)
+
+        self.try_to_spawn_tank()
 
     @property
     def all_enemies(self):
         return [t for t in self.tanks if t.fraction == Tank.ENEMY]
 
     def get_next_enemy(self, pos):
-        t_type = random.choice([
-            Tank.Type.ENEMY_SIMPLE,
-            Tank.Type.ENEMY_FAST,
-            Tank.Type.ENEMY_HEAVY,
-            Tank.Type.ENEMY_MIDDLE
-        ])
+        t_type = next(self._enemy_queue_iter)
         new_tank = Tank(Tank.ENEMY, Tank.Color.PLAIN, t_type)
         new_tank.is_spawning = True
 
