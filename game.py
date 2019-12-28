@@ -31,7 +31,9 @@ class Game:
         self.scene.add_child(self.tanks)
 
         self.make_my_tank()
-        self.make_enemy()
+
+        self.ai = EnemyFractionAI(self.field, self.tanks)
+        self.ai.on_tank_destroyed = self._on_destroyed_tank
 
         # projectiles --
         self.projectiles = GameObject()
@@ -40,6 +42,8 @@ class Game:
         # bonuses --
         self.bonues = GameObject()
         self.scene.add_child(self.bonues)
+
+        self.score = 0
 
         # else --
         self.font_debug = pygame.font.Font(None, 18)
@@ -62,9 +66,16 @@ class Game:
         if t.is_bonus:
             self.make_bonus(*t.center_point)
 
-    def make_enemy(self):
-        self.ai = EnemyFractionAI(self.field, self.tanks)
-        self.ai.on_tank_destroyed = self._on_destroyed_tank
+        if t.fraction == t.ENEMY:
+            if t.tank_type == t.Type.ENEMY_SIMPLE:
+                ds = 100
+            elif t.tank_type == t.Type.ENEMY_FAST:
+                ds = 200
+            elif t.tank_type == t.Type.ENEMY_MIDDLE:
+                ds = 300
+            elif t.tank_type == t.Type.ENEMY_HEAVY:
+                ds = 400
+            self.score += ds
 
     def make_bonus(self, x, y, t=None):
         bonus = Bonus(BonusType.random() if t is None else t, x, y)
@@ -226,6 +237,9 @@ class Game:
 
     def render(self, screen):
         self.scene.visit(screen)
+
+        score_label = self.font_debug.render(str(self.score), 1, (255, 255, 255))
+        screen.blit(score_label, (GAME_WIDTH - 50, 5))
 
         # - 1 because the scene is not literally an object
         dbg_text = f'Objects: {self.scene.total_children - 1}'
