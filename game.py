@@ -49,7 +49,7 @@ class Game:
         self.font_debug = pygame.font.Font(None, 18)
 
         # to test bonus
-        # self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.DESTRUCTION)
+        self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.UPGRADE)
 
     def respawn_tank(self, t: Tank):
         pos = random.choice(self.field.respawn_points(not self.is_friend(t)))
@@ -75,6 +75,8 @@ class Game:
                 ds = 300
             elif t.tank_type == t.Type.ENEMY_HEAVY:
                 ds = 400
+            else:
+                ds = 0
             self.score += ds
 
     def make_bonus(self, x, y, t=None):
@@ -126,6 +128,8 @@ class Game:
                     self.kill_tank(t)
         elif bonus == bonus.CASK:
             t.shielded = True
+        elif bonus == bonus.UPGRADE:
+            t.upgrade()
         else:
             print(f'Bonus {bonus} not implemented yet.')
 

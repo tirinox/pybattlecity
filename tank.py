@@ -24,6 +24,17 @@ class Tank(GameObject):
         ENEMY_MIDDLE = 12
         ENEMY_HEAVY = 14
 
+        @property
+        def next_level(self):
+            if self == self.LEVEL_1:
+                return self.LEVEL_2
+            elif self == self.LEVEL_2:
+                return self.LEVEL_3
+            elif self == self.LEVEL_3:
+                return self.LEVEL_4
+            else:
+                return self.LEVEL_4
+
     POSSIBLE_MOVE_STATES = 0, 2
 
     SHIELD_TIME = 10
@@ -260,3 +271,9 @@ class Tank(GameObject):
             f = floor if vy < 0 else ceil
             y = f(y / discrete_step) * discrete_step
         self.position = (x, y)
+
+    def upgrade(self):
+        if self.fraction == self.FRIEND:
+            if self.tank_type != self.tank_type.next_level:
+                self.tank_type = self.tank_type.next_level
+                self._update_sprites()
