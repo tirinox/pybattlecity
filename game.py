@@ -45,11 +45,14 @@ class Game:
 
         self.score = 0
 
+        self.freeze_timer = Timer(10)
+        self.freeze_timer.done = True
+
         # else --
         self.font_debug = pygame.font.Font(None, 18)
 
         # to test bonus
-        self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.UPGRADE)
+        self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.TIMER)
 
     def respawn_tank(self, t: Tank):
         pos = random.choice(self.field.respawn_points(not self.is_friend(t)))
@@ -61,6 +64,10 @@ class Game:
         self.my_tank.activate_shield()
         self.tanks.add_child(self.my_tank)
         self.my_tank_move_to_direction = None
+
+    @property
+    def frozen_enemy_time(self):
+        return not self.freeze_timer.done
 
     def _on_destroyed_tank(self, t: Tank):
         if t.is_bonus:
@@ -130,6 +137,8 @@ class Game:
             t.shielded = True
         elif bonus == bonus.UPGRADE:
             t.upgrade()
+        elif bonus == bonus.TIMER:
+            self.freeze_timer.start()
         else:
             print(f'Bonus {bonus} not implemented yet.')
 
@@ -158,7 +167,11 @@ class Game:
             else:
                 self.move_tank(self.my_tank_move_to_direction, self.my_tank)
 
-        self.ai.update()
+        self.freeze_timer.tick()
+        if self.frozen_enemy_time:
+            self.ai.stop_all_moving()
+        else:
+            self.ai.update()
 
         for tank in self.all_mature_tanks:
             if tank.want_to_fire:
@@ -183,6 +196,7 @@ class Game:
             self.respawn_tank(t)
         else:
             t.hit = True
+            self.ai.update_one_tank(t)
 
     def make_game_over(self):
         self.my_base.broken = True

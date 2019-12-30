@@ -135,12 +135,19 @@ class EnemyFractionAI:
             self.spawn_points[pos] = tank
             self.tanks.add_child(tank)
 
+    def stop_all_moving(self):
+        for t in self.all_enemies:
+            t.stop()
+
     def update(self):
         if self.spawn_timer.tick():
             self.spawn_timer.start()
             self.try_to_spawn_tank()
 
         for enemy_tank in self.all_enemies:
-            enemy_tank.ai.update()
-            if enemy_tank.ai.is_destroyed:
-                self.on_tank_destroyed(enemy_tank)
+            self.update_one_tank(enemy_tank)
+
+    def update_one_tank(self, t: Tank):
+        t.ai.update()
+        if t.ai.is_destroyed:
+            self.on_tank_destroyed(t)
