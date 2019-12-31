@@ -55,8 +55,11 @@ class Game:
         self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.TIMER)
 
     def respawn_tank(self, t: Tank):
-        pos = random.choice(self.field.respawn_points(not self.is_friend(t)))
+        is_friend = self.is_friend(t)
+        pos = random.choice(self.field.respawn_points(not is_friend))
         t.place(self.field.get_center_of_cell(*pos))
+        if is_friend:
+            t.tank_type = t.Type.LEVEL_1
 
     def make_my_tank(self):
         self.my_tank = Tank(Tank.FRIEND, Tank.Color.YELLOW, Tank.Type.LEVEL_1)
