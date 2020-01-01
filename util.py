@@ -55,6 +55,10 @@ class Animator:
                     self.state = 0
         return self.state
 
+    @property
+    def active(self):
+        return not self.done
+
 
 class Timer(Animator):
     def __init__(self, delay, paused=True):
