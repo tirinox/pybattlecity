@@ -8,6 +8,7 @@ from explosion import Explosion
 from my_base import MyBase
 from bonus import Bonus, BonusType
 from ai import EnemyFractionAI
+from bonus_field_protect import FieldProtector
 import random
 
 
@@ -21,6 +22,8 @@ class Game:
         self.field = Field()
         self.field.load_from_file('data/level1.txt')
         self.scene.add_child(self.field)
+
+        self.field_protector = FieldProtector(self.field)
 
         self.my_base = MyBase()
         self.my_base.position = self.field.map.coord_by_col_and_row(12, 24)
@@ -52,7 +55,7 @@ class Game:
         self.font_debug = pygame.font.Font(None, 18)
 
         # to test bonus
-        self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.TIMER)
+        self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.STIFF_BASE)
 
     def respawn_tank(self, t: Tank):
         is_friend = self.is_friend(t)
@@ -142,6 +145,8 @@ class Game:
             t.upgrade()
         elif bonus == bonus.TIMER:
             self.freeze_timer.start()
+        elif bonus == bonus.STIFF_BASE:
+            self.field_protector.activate()
         else:
             print(f'Bonus {bonus} not implemented yet.')
 
@@ -249,6 +254,8 @@ class Game:
     def update(self):
         self.field.oc_map.clear()
         self.field.oc_map.fill_rect(self.my_base.bounding_rect, self.my_base)
+
+        self.field_protector.update()
 
         self.update_tanks()
         self.update_bonuses()
