@@ -55,7 +55,7 @@ class Game:
         self.font_debug = pygame.font.Font(None, 18)
 
         # to test bonus
-        self.make_bonus(*self.field.map.coord_by_col_and_row(12, 18), BonusType.STIFF_BASE)
+        self.make_bonus(*self.field.map.coord_by_col_and_row(13, 22), BonusType.TOP_TANK)
 
     def respawn_tank(self, t: Tank):
         is_friend = self.is_friend(t)
@@ -147,6 +147,8 @@ class Game:
             self.freeze_timer.start()
         elif bonus == bonus.STIFF_BASE:
             self.field_protector.activate()
+        elif bonus == bonus.TOP_TANK:
+            t.upgrade(maximum=True)
         else:
             print(f'Bonus {bonus} not implemented yet.')
 

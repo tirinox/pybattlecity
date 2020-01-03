@@ -35,6 +35,10 @@ class Tank(GameObject):
             else:
                 return self.LEVEL_4
 
+        @property
+        def max_level(self):
+            return self.LEVEL_4
+
     POSSIBLE_MOVE_STATES = 0, 2
 
     SHIELD_TIME = 10
@@ -272,8 +276,11 @@ class Tank(GameObject):
             y = f(y / discrete_step) * discrete_step
         self.position = (x, y)
 
-    def upgrade(self):
+    def upgrade(self, maximum=False):
         if self.fraction == self.FRIEND:
-            if self.tank_type != self.tank_type.next_level:
+            if maximum:
+                self.tank_type = self.tank_type.max_level
+                self._update_sprites()
+            elif self.tank_type != self.tank_type.next_level:
                 self.tank_type = self.tank_type.next_level
                 self._update_sprites()
