@@ -10,7 +10,10 @@ class Projectile(GameObject):
 
     SHIFT_BACK = -2
 
-    def __init__(self, x, y, d: Direction, power=1, sender=None):
+    POWER_NORMAL = 1
+    POWER_HIGH = 2
+
+    def __init__(self, x, y, d: Direction, power=POWER_NORMAL, sender=None):
         super().__init__()
 
         self.sender = sender

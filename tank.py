@@ -39,6 +39,10 @@ class Tank(GameObject):
         def max_level(self):
             return self.LEVEL_4
 
+        @property
+        def can_crash_concrete(self):
+            return self == self.max_level
+
     POSSIBLE_MOVE_STATES = 0, 2
 
     SHIELD_TIME = 10

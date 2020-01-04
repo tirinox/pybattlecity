@@ -215,14 +215,21 @@ class Field(GameObject):
             if point_in_rect_eq(px, py, abs_cell_rect):
                 hit = True
 
+                powerful = p.power == p.POWER_HIGH
+
                 if cell == cell.BRICK:
-                    new_cell = {
-                        Direction.LEFT: cell.BRICK_LEFT,
-                        Direction.RIGHT: cell.BRICK_RIGHT,
-                        Direction.UP: cell.BRICK_TOP,
-                        Direction.DOWN: cell.BRICK_BOTTOM
-                    }[p.direction]
+                    if powerful:
+                        new_cell = cell.FREE
+                    else:
+                        new_cell = {
+                            Direction.LEFT: cell.BRICK_LEFT,
+                            Direction.RIGHT: cell.BRICK_RIGHT,
+                            Direction.UP: cell.BRICK_TOP,
+                            Direction.DOWN: cell.BRICK_BOTTOM
+                        }[p.direction]
                 elif cell.is_half_brick:
+                    new_cell = cell.FREE
+                elif cell == cell.CONCRETE and powerful:
                     new_cell = cell.FREE
                 else:
                     continue

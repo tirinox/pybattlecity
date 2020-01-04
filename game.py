@@ -126,7 +126,8 @@ class Game:
             return
 
         if tank.try_fire():
-            projectile = Projectile(*tank.gun_point, tank.direction, sender=tank)
+            power = Projectile.POWER_HIGH if tank.tank_type.can_crash_concrete else Projectile.POWER_NORMAL
+            projectile = Projectile(*tank.gun_point, tank.direction, sender=tank, power=power)
             self.projectiles.add_child(projectile)
 
     def move_tank(self, direction: Direction, tank=None):
