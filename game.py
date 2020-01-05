@@ -9,6 +9,7 @@ from my_base import MyBase
 from bonus import Bonus, BonusType
 from ai import EnemyFractionAI
 from bonus_field_protect import FieldProtector
+from score_node import ScoreLayer
 import random
 
 
@@ -47,6 +48,8 @@ class Game:
         self.scene.add_child(self.bonues)
 
         self.score = 0
+        self.score_layer = ScoreLayer()
+        self.scene.add_child(self.score_layer)
 
         self.freeze_timer = Timer(10)
         self.freeze_timer.done = True
@@ -91,6 +94,8 @@ class Game:
             else:
                 ds = 0
             self.score += ds
+
+            self.score_layer.add(*t.center_point, ds)
 
     def make_bonus(self, x, y, t=None):
         bonus = Bonus(BonusType.random() if t is None else t, x, y)
@@ -259,6 +264,7 @@ class Game:
         self.field.oc_map.fill_rect(self.my_base.bounding_rect, self.my_base)
 
         self.field_protector.update()
+        self.score_layer.update()
 
         self.update_tanks()
         self.update_bonuses()
