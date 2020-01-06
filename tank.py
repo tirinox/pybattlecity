@@ -68,6 +68,7 @@ class Tank(GameObject):
             self.speed = self.SPEED_FAST
         else:
             self.speed = self.SPEED_NORMAL
+        self._update_sprites()
 
     def fire(self):
         self.want_to_fire = True
@@ -94,12 +95,16 @@ class Tank(GameObject):
         super().__init__()
 
         self.fraction = fraction
+        self.speed = self.SPEED_NORMAL
         self._direction = Direction.UP
-        self.tank_type = tank_type
-        self.color = color
+        self._tank_type = tank_type
+        self._color = color
         self.is_spawning = False
+
+        self._update_sprites()
         
         self.hit = False
+        self.to_destroy = False
 
         self.is_bonus = False
         self._bonus_animator = Animator(delay=0.5, max_states=2)

@@ -31,15 +31,13 @@ class TankAI:
     def __init__(self, tank: Tank, field: Field):
         self.tank = tank
         self.field = field
-        self.is_destroyed = False
 
         self.fire_timer = ArmedTimer(delay=self.FIRE_TIMER)
         self.dir_timer = ArmedTimer(delay=self.dir_delay())
         self.spawn_timer = ArmedTimer(delay=self.SPAWNING_DELAY)
 
     def _destroy(self):
-        self.tank.remove_from_parent()
-        self.is_destroyed = True
+        self.tank.to_destroy = True
 
     def _degrade(self):
         if self.tank.color == Tank.Color.PLAIN:
@@ -91,7 +89,6 @@ class EnemyFractionAI:
             (x, y): None for x, y in field.respawn_points(True)
         }
         self.spawn_timer = ArmedTimer(self.RESPAWN_TIMER)
-        self.on_tank_destroyed = lambda t: None
 
         self.enemy_queue = cycle([
             Tank.Type.ENEMY_SIMPLE,
@@ -148,6 +145,5 @@ class EnemyFractionAI:
             self.update_one_tank(enemy_tank)
 
     def update_one_tank(self, t: Tank):
+        t.to_destroy = False
         t.ai.update()
-        if t.ai.is_destroyed:
-            self.on_tank_destroyed(t)

@@ -37,7 +37,6 @@ class Game:
         self.make_my_tank()
 
         self.ai = EnemyFractionAI(self.field, self.tanks)
-        self.ai.on_tank_destroyed = self._on_destroyed_tank
 
         # projectiles --
         self.projectiles = GameObject()
@@ -193,6 +192,9 @@ class Game:
             if tank.want_to_fire:
                 self.fire(tank)
 
+            if tank.to_destroy:
+                tank.remove_from_parent()
+
             bb = tank.bounding_rect
             if not self.field.oc_map.test_rect(bb, good_values=(None, tank)):
                 push_back = True
@@ -205,14 +207,30 @@ class Game:
     def is_player_tank(self, t: Tank):
         return t is self.my_tank
 
+    def hit_tank(self, t: Tank):
+        destroy = False
+        if self.is_friend(t):
+            destroy = True
+            self.respawn_tank(t)
+        else:
+            t.hit = True
+            self.ai.update_one_tank(t)
+            if t.to_destroy:
+                destroy = True
+                t.remove_from_parent()
+                self._on_destroyed_tank(t)
+
+        if destroy:
+            self.make_explosion(*t.center_point, Explosion.TYPE_FULL)
+
     def kill_tank(self, t: Tank):
         self.make_explosion(*t.center_point, Explosion.TYPE_FULL)
 
         if self.is_friend(t):
             self.respawn_tank(t)
         else:
-            t.hit = True
             self.ai.update_one_tank(t)
+            t.remove_from_parent()
 
     def make_game_over(self):
         self.my_base.broken = True
@@ -250,7 +268,7 @@ class Game:
                         was_stricken_object = True
                         if not t.shielded and p.sender.fraction != t.fraction:
                             self.make_explosion(*p.position, Explosion.TYPE_SHORT)
-                            self.kill_tank(t)
+                            self.hit_tank(t)
                         break
 
             if was_stricken_object:
