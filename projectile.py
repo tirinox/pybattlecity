@@ -63,6 +63,7 @@ class Projectile(GameObject):
         self.move(vx * self.SPEED, vy * self.SPEED)
 
     def split_for_aim(self):
+        """разбивает снаряд на 3 виртуальных для равномерности разрушения"""
         x, y = self.position
         distance = int(ATLAS().real_sprite_size / 1.4)
         vx, vy = self.direction.vector

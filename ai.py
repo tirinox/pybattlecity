@@ -111,7 +111,7 @@ class EnemyFractionAI:
 
         new_tank.ai = TankAI(new_tank, self.field)
 
-        if random.uniform(0, 1) > 0.5:
+        if random.uniform(0, 1) > 0.35:
             new_tank.is_bonus = True
 
         new_tank.place(self.field.get_center_of_cell(*pos))
